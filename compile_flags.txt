@@ -1,0 +1,3 @@
+-isystem
+./
+-I/usr/local/include/taglib/
