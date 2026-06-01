@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <tag_c.h>
-#include <music_defs.h>
+#include <music_player2.h>
+#include <sqlite3.h>
 
-int read_tags(lib* lib, char* path) {
+int read_tags(sqlite3* lib_db, char* path) {
     TagLib_File *file;
     TagLib_Tag *tag;
 
@@ -19,10 +20,14 @@ int read_tags(lib* lib, char* path) {
     char* genre = taglib_tag_genre(tag);
     unsigned int year = taglib_tag_year(tag);
 
+    //dynamic str query here
+
+    const char* sql_str = "INSERT OR IGNORE INTO artists(name) VALUES (%s)";
+
     return 0;
 }
 
-size_t scan_dir(lib* lib, char* path) {
+size_t scan_dir(sqlite3* lib_db, char* path) {
     struct dirent* de; // pointer for directory entry
     struct stat statbuf;
     char* subpath;
@@ -47,7 +52,7 @@ size_t scan_dir(lib* lib, char* path) {
 
         if (statbuf.st_mode & S_IFDIR) {
             //recurse through sub directory
-            scan_dir(lib, subpath);
+            scan_dir(lib_db, subpath);
             free(subpath);
             continue;
         }
