@@ -1,6 +1,9 @@
 #include <music_player2.h>
 
 int lib_db_init(lib_db* lib_db) {
+    // set everything to null
+    memset(lib_db, 0, sizeof(*lib_db));
+
     char* err_msg = NULL;
     int rc = sqlite3_open("lib.db", &lib_db->db);
     if (rc != SQLITE_OK) {
@@ -121,5 +124,89 @@ int lib_db_init(lib_db* lib_db) {
 }
 
 int insert_artist(lib_db* lib_db, char* artist_name) {
+    sqlite3_stmt* stmt = lib_db->insert_artist;
+    sqlite3_bind_text(stmt, 1, artist_name, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    return (rc == SQLITE_DONE) ? 0 : -1;
+}
+
+int retrieve_artist(lib_db* lib_db, char* artist_name, JHASHMAP* cache) {
+    int artist_id = (int)(intptr_t)JHASHMAP_get(cache, artist_name);
+    if (artist_id > 0) {
+        return artist_id;
+    }
+    //not in cache, need to query db for key
+    sqlite3_stmt* stmt = lib_db->select_artist;
+    sqlite3_bind_text(stmt, 1, artist_name, -1, SQLITE_TRANSIENT);
     
+    artist_id = -1;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        artist_id = sqlite3_column_int(stmt, 0);
+        char* name = malloc(strlen(artist_name));
+        JHASHMAP_add(cache, name, (void*)(intptr_t) artist_id);
+    }
+
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    return artist_id;
+}
+
+int insert_album(lib_db* lib_db, int artist_id, char* title, int year) {
+
+    sqlite3_stmt* stmt = lib_db->insert_album;
+    sqlite3_bind_int(stmt, 1, artist_id);
+    sqlite3_bind_text(stmt, 2, title, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 1, artist_id);
+    int rc = sqlite3_step(stmt);
+
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    return (rc == SQLITE_DONE) ? 0 : -1;
+}
+
+int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year, JHASHMAP* cache) {
+    // need to build cache key with more info than just album title
+    char local_key[512];
+    snprintf(local_key, 512, "%d|%s|%d", artist_id, album_name, year);
+    int album_id = (int)(intptr_t)JHASHMAP_get(cache, local_key);
+    if (album_id > 0) {
+        return album_id;
+    }
+    //not in cache, need to query db for key
+    sqlite3_stmt* stmt = lib_db->select_artist;
+    sqlite3_bind_int(stmt, 1, artist_id);
+    sqlite3_bind_text(stmt, 2, album_name, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, year);
+    
+    album_id = -1;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        album_id = sqlite3_column_int(stmt, 0);
+        char* cache_key = malloc(strlen(local_key));
+        strcpy(cache_key, local_key);
+        JHASHMAP_add(cache, cache_key, (void*)(intptr_t) album_id);
+    }
+
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    return album_id;
+}
+
+int insert_song(lib_db* lib_db, int album_id, char* song_title) {
+    sqlite3_stmt* stmt = lib_db->insert_song;
+    sqlite3_bind_int(stmt, 1, album_id);
+    sqlite3_bind_text(stmt, 2, song_title, -1, SQLITE_TRANSIENT);
+    
+    int rc = sqlite3_step(stmt);
+
+    sqlite3_reset(stmt);
+    sqlite3_clear_bindings(stmt);
+
+    return (rc == SQLITE_DONE) ? 0 : -1;
 }

@@ -22,10 +22,31 @@ int read_tags(sqlite3* lib_db, char* path) {
 
     //dynamic str query here
 
-    const char* sql_str = "INSERT OR IGNORE INTO artists(name) VALUES (%s)";
+    // insert artist
+
+    sqlite3_stmt* stmt;
+    const char* sql_str = "INSERT OR IGNORE INTO artists(name) VALUES(?)";
+    sqlite3_prepare_v2(lib_db, sql_str, -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, artist, -1, SQLITE_TRANSIENT);
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    // get artist id
+    int artist_id = -1;
+    sql_str = "SELECT artist_id FROM artists WHERE name = ?;";
+    sqlite3_prepare_v2(lib_db, sql_str, -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, artist, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        artist_id = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+
+
+    sql_str = "INSERT OR INGNORE INTO albums()";
 
     return 0;
 }
+
 
 size_t scan_dir(sqlite3* lib_db, char* path) {
     struct dirent* de; // pointer for directory entry

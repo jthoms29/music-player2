@@ -1,8 +1,27 @@
-#ifndef MUSIC_DEFS_H
-#define MUSIC_DEFS_H
+#ifndef MUSIC_PLAYER2_H
+#define MUSIC_PLAYER2_H
 
 #include <stdint.h>
+#include <sqlite3.h>
 #include <../JLib/src/JVEC.h>
+#include <../JLib/src/JHASHMAP.h>
+
+
+typedef struct lib_db {
+    sqlite3* db;
+
+    sqlite3_stmt* insert_artist;
+    sqlite3_stmt* select_artist;
+
+    sqlite3_stmt* insert_album;
+    sqlite3_stmt* select_album;
+
+    sqlite3_stmt* insert_song;
+} lib_db;
+
+int lib_db_init(lib_db* lib_db);
+
+
 
 typedef struct song {
     char* path;
