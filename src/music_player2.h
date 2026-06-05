@@ -6,6 +6,7 @@
 #include <../../JLib/src/JHELPER.h>
 #include <../../JLib/src/JHASHMAP.h>
 #include <../../JLib/src/JVEC.h>
+#include <../../JLib/src/JARENA.h>
 
 typedef struct lib_db {
     sqlite3* db;
@@ -42,19 +43,24 @@ typedef struct album {
     uint8_t year;
     uint8_t date;
     uint8_t tracks;
-    song* songs;
+    JVEC* songs;
 } album;
 
 typedef struct artist {
     char* name;
-    album* albums;
+    JVEC* albums;
 } artist;
 
-typedef struct lib {
-    // 
-    JVEC* letters[256];
+typedef struct lib_mem {
+    // each letter will hold a vector of artists
+    JVEC* artists;
+    JVEC* albums;
+    JVEC* songs;
 
-} lib;
+
+} lib_mem;
+
+
 
 int insert_artist(lib_db* lib_db, char* artist_name);
 int retrieve_artist(lib_db* lib_db, char* artist_name);
@@ -63,4 +69,8 @@ int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year);
 
 int insert_song(lib_db* lib_db, int album_id, int tracknum, char* song_title, char* path);
 size_t scan_dir(lib_db* lib_db, char* path);
+
+
+
+int load_artists(lib_mem* mem, lib_db* db);
 #endif

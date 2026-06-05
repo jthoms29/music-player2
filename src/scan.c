@@ -9,6 +9,7 @@
 #include <music_player2.h>
 #include <sqlite3.h>
 
+
 int read_tags(lib_db* lib_db, char* path) {
     TagLib_File *file;
     TagLib_Tag *tag;

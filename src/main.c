@@ -7,4 +7,5 @@ int main(int argc, char** argv) {
     lib_db lib_db;
     lib_db_init(&lib_db);
     scan_dir(&lib_db, argv[1]);
+    load_artists(NULL, &lib_db);
 }
