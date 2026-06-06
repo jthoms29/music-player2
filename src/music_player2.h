@@ -31,8 +31,8 @@ typedef struct song {
     char* artist;
     char* album;
     char* genre;
-    uint8_t year;
-    uint8_t date;
+    char* date;
+    char* orig_date;
     uint8_t track_num;
 } song;
 
@@ -40,8 +40,8 @@ typedef struct album {
     char* title;
     char* artist;
     char* genre;
-    uint8_t year;
-    uint8_t date;
+    char* date;
+    char* orig_date;
     uint8_t tracks;
     JVEC* songs;
 } album;
@@ -64,13 +64,14 @@ typedef struct lib_mem {
 
 int insert_artist(lib_db* lib_db, char* artist_name);
 int retrieve_artist(lib_db* lib_db, char* artist_name);
-int insert_album(lib_db* lib_db, int artist_id, char* title, int year);
-int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year);
+int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date);
+int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date);
 
-int insert_song(lib_db* lib_db, int album_id, int tracknum, char* song_title, char* path);
+int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
 size_t scan_dir(lib_db* lib_db, char* path);
 
 
 
+lib_mem* lib_mem_init(void);
 int load_artists(lib_mem* mem, lib_db* db);
 #endif

@@ -21,9 +21,10 @@ int lib_db_init(lib_db* lib_db) {
         "album_id INTEGER PRIMARY KEY,"
         "artist_id INTEGER NOT NULL,"
         "title TEXT NOT NULL,"
-        "year INTEGER,"
+        "date TEXT NOT NULL,"
+        "orig_date TEXT NOT NULL,"
         "FOREIGN KEY (artist_id) REFERENCES artists(artist_id),"
-        "UNIQUE(artist_id, title, year)"
+        "UNIQUE(artist_id, title, date)"
         ");"
 
         "CREATE TABLE IF NOT EXISTS songs ("
@@ -31,10 +32,12 @@ int lib_db_init(lib_db* lib_db) {
         "album_id INTEGER NOT NULL,"
         "title TEXT NOT NULL,"
         "track_num INTEGER,"
-        "dur_ms INTEGER,"
+        "dur_s INTEGER,"
+        "bitrate INTEGER,"
+        "sample_rate INTEGER,"
+        "channels INTEGER,"
+        "comment TEXT,"
         "path TEXT NOT NULL UNIQUE,"
-        "mtime INTEGER,"
-        "size INTEGER,"
         "FOREIGN KEY (album_id) REFERENCES albums(album_id)"
         ");";
     rc = sqlite3_exec(lib_db->db, sql_str, 0, 0, &err_msg);
@@ -74,7 +77,7 @@ int lib_db_init(lib_db* lib_db) {
     //INSERT ALBUM
     rc = sqlite3_prepare_v2(
         lib_db->db, 
-        "INSERT OR IGNORE INTO albums(artist_id, title, year) VALUES(?, ?, ?);", 
+        "INSERT OR IGNORE INTO albums(artist_id, title, date, orig_date) VALUES(?, ?, ?, ?);", 
         -1, 
         &lib_db->insert_album, 
         NULL
@@ -87,7 +90,7 @@ int lib_db_init(lib_db* lib_db) {
     // RETRIEVE ALBUM
     rc = sqlite3_prepare_v2(
         lib_db->db, 
-        "SELECT album_id FROM albums WHERE artist_id = ? and title = ? and year = ?;",
+        "SELECT album_id FROM albums WHERE artist_id = ? and title = ? and date = ?;",
         -1, 
         &lib_db->select_album, 
         NULL
@@ -100,7 +103,7 @@ int lib_db_init(lib_db* lib_db) {
     // INSERT SONG
     rc = sqlite3_prepare_v2(
         lib_db->db, 
-        "INSERT OR IGNORE INTO songs(album_id, title, track_num, dur_ms, path, mtime, size) VALUES(?, ?, ?, ?, ?, ?, ?);", 
+        "INSERT OR IGNORE INTO songs(album_id, title, track_num, dur_s, bitrate, sample_rate, channels, comment, path) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", 
         -1, 
         &lib_db->insert_song, 
         NULL
@@ -164,12 +167,13 @@ int retrieve_artist(lib_db* lib_db, char* artist_name) {
     return artist_id;
 }
 
-int insert_album(lib_db* lib_db, int artist_id, char* title, int year) {
+int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date) {
 
     sqlite3_stmt* stmt = lib_db->insert_album;
     sqlite3_bind_int(stmt, 1, artist_id);
     sqlite3_bind_text(stmt, 2, title, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, year);
+    sqlite3_bind_text(stmt, 3, date, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 4, orig_date, -1, SQLITE_TRANSIENT);
     int rc = sqlite3_step(stmt);
 
     sqlite3_reset(stmt);
@@ -178,11 +182,11 @@ int insert_album(lib_db* lib_db, int artist_id, char* title, int year) {
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
 
-int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year) {
+int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date) {
     // need to build cache key with more info than just album title
     char local_key[512];
     JHASHMAP* cache = lib_db->album_cache;
-    snprintf(local_key, 512, "%d|%s|%d", artist_id, album_name, year);
+    snprintf(local_key, 512, "%d|%s|%s", artist_id, album_name, date);
     int album_id = (int)(intptr_t)JHASHMAP_get(cache, local_key);
     if (album_id > 0) {
         return album_id;
@@ -191,7 +195,7 @@ int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year) {
     sqlite3_stmt* stmt = lib_db->select_album;
     sqlite3_bind_int(stmt, 1, artist_id);
     sqlite3_bind_text(stmt, 2, album_name, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, year);
+    sqlite3_bind_text(stmt, 3, date, -1, SQLITE_TRANSIENT);
     
     album_id = -1;
     if (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -207,12 +211,17 @@ int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, int year) {
     return album_id;
 }
 
-int insert_song(lib_db* lib_db, int album_id, int tracknum, char* song_title, char* path) {
+int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path) {
     sqlite3_stmt* stmt = lib_db->insert_song;
     sqlite3_bind_int(stmt, 1, album_id);
     sqlite3_bind_text(stmt, 2, song_title, -1, SQLITE_TRANSIENT);
     sqlite3_bind_int(stmt, 3, tracknum);
-    sqlite3_bind_text(stmt, 5, path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 4, dur_s);
+    sqlite3_bind_int(stmt, 5, bitrate);
+    sqlite3_bind_int(stmt, 6, sample_rate);
+    sqlite3_bind_int(stmt, 7, channels);
+    sqlite3_bind_text(stmt, 8, comment, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 9, path, -1, SQLITE_TRANSIENT);
 
     int rc = sqlite3_step(stmt);
 

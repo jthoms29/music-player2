@@ -13,29 +13,45 @@
 int read_tags(lib_db* lib_db, char* path) {
     TagLib_File *file;
     TagLib_Tag *tag;
+    const TagLib_AudioProperties *properties;
 
-    printf("%s\n", path);
     if ( !(file = taglib_file_new(path)) || !(tag = taglib_file_tag(file)) ) {
         return -1; 
     }
+
+    properties = taglib_file_audioproperties(file);
+
     char* title = taglib_tag_title(tag);
     char* artist = taglib_tag_artist(tag);
     char* album = taglib_tag_album(tag);
     char* genre = taglib_tag_genre(tag);
+    char* comment = taglib_tag_comment(tag);
     int tracknum = taglib_tag_track(tag);
-    unsigned int year = taglib_tag_year(tag);
 
-    
+    int bitrate = taglib_audioproperties_bitrate(properties);
+    int sample_rate = taglib_audioproperties_samplerate(properties);
+    int dur_s = taglib_audioproperties_length(properties);
+    int channels = taglib_audioproperties_channels(properties);
+   
+
+    char **vals1, **vals2;
+    vals1 = taglib_property_get(file, "ORIGINALDATE");
+    char* orig_date = (vals1) ? vals1[0] : "unknown";
+    vals2 = taglib_property_get(file, "DATE");
+    char* date = (vals2) ? vals2[0] : "unknown";
+
+
     insert_artist(lib_db, artist);
     int artist_id = retrieve_artist(lib_db, artist);
 
-    insert_album(lib_db, artist_id, album, year);
-    int album_id = retrieve_album(lib_db, artist_id, album, year);
+    insert_album(lib_db, artist_id, album, date, orig_date);
+    int album_id = retrieve_album(lib_db, artist_id, album, date);
     printf("album id: %d\n", album_id);
 
-    insert_song(lib_db, album_id, tracknum, title, path);
+    insert_song(lib_db, album_id, title, tracknum, dur_s, bitrate, sample_rate, channels, comment, path);
 
-
+    if (vals1) { taglib_property_free(vals1); }
+    if (vals2) { taglib_property_free(vals2); }
 
     return 0;
 }
