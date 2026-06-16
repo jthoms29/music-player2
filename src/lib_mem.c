@@ -6,6 +6,33 @@ int album_compare(const void* a1, const void* a2);
 int song_compare(const void* s1, const void* s2);
 
 
+
+void lib_mem_free(lib_mem** lib_ptr) {
+    if (*lib_ptr == NULL) {
+        return;
+    }
+
+    if ((*lib_ptr)->artists) {
+        JVEC_free(&(*lib_ptr)->artists); // :-)
+    }
+    if ((*lib_ptr)->albums) {
+        JVEC_free(&(*lib_ptr)->albums); // :-)
+    }
+    if ((*lib_ptr)->songs) {
+        JVEC_free(&(*lib_ptr)->songs); // :-)
+    }
+    if ((*lib_ptr)->artists) {
+        JVEC_free(&(*lib_ptr)->artists); // :-)
+    }
+    if ((*lib_ptr)->artists) {
+        JVEC_free(&(*lib_ptr)->artists); // :-)
+    }
+
+    free(*lib_ptr);
+    *lib_ptr = NULL;
+}
+
+
 lib_mem* lib_mem_init(void) {
     lib_mem* lib = calloc(1, sizeof(*lib));
     if (!lib) {
@@ -13,36 +40,47 @@ lib_mem* lib_mem_init(void) {
         return NULL;
     }
 
-    JVEC* artists = JVEC_new(NULL, artist_compare);
-    if (!artists) {
+    lib->artists = JVEC_new(NULL, artist_compare);
+    if (!lib->artists) {
         fprintf(stderr, "Failed to create artists vector\n");
-        return NULL;
+        goto uh_oh;
     }
 
-    JVEC* albums = JVEC_new(NULL, album_compare);
-    if (!albums) {
+    lib->albums = JVEC_new(NULL, album_compare);
+    if (!lib->albums) {
         fprintf(stderr, "Failed to create albums vector\n");
-        JVEC_free(&artists);
-        return NULL;
+        goto uh_oh;
     }
 
-    JVEC* songs = JVEC_new(NULL, song_compare);
-    if (!songs) {
+    lib->songs = JVEC_new(NULL, song_compare);
+    if (!lib->songs) {
         fprintf(stderr, "Failed to create songs vector\n");
-        JVEC_free(&artists);
-        JVEC_free(&albums);
-        return NULL;
+        goto uh_oh;
     }
 
-    lib->artists = artists;
-    lib->albums = albums;
-    lib->songs = songs;
+
+    lib->artist_cache = JHASHMAP_new(int_hash, int_compare);
+    if (!lib->artist_cache) {
+        fprintf(stderr, "Failed to create artist cache\n");
+        goto uh_oh;
+    }
+
+    lib->album_cache = JHASHMAP_new(int_hash, int_compare);
+    if (!lib->album_cache) {
+        fprintf(stderr, "Failed to create album cache\n");
+        goto uh_oh;
+    }
 
     return lib;
+
+    uh_oh:
+    lib_mem_free(&lib);
+    return NULL;
 }
 
 int load_artists(lib_mem* mem, lib_db* db) {
     JVEC* vec = mem->artists;
+    JHASHMAP* cache = mem->artist_cache;
 
     sqlite3_stmt* pstmt;
     char* sql = "SELECT artist_id, name from artists;";
@@ -87,6 +125,9 @@ int load_artists(lib_mem* mem, lib_db* db) {
         atst->name = name_alloc;
 
         JVEC_append(vec, atst);
+
+        // add to temporary cache indexed by sql key. Allows albums to be associated with artist efficiently
+        JHASHMAP_add(cache, CAST_INT(id), atst);
     }
 
     // put all artists in alphabetical order
@@ -96,6 +137,10 @@ int load_artists(lib_mem* mem, lib_db* db) {
 
 int load_albums(lib_mem* mem, lib_db* db) {
     JVEC* vec = mem->albums;
+
+    JHASHMAP* artist_cache = mem->artist_cache;
+    JHASHMAP* album_cache = mem->album_cache;
+
 
     sqlite3_stmt* pstmt;
     char* sql = "SELECT album_id, artist_id, title, date, orig_date from albums;";
@@ -175,12 +220,27 @@ int load_albums(lib_mem* mem, lib_db* db) {
         JVEC_append(vec, abm);
 
         // also need to add to albums vector within artist
-        //==TODO+=
+        artist* atst = JHASHMAP_get(artist_cache, CAST_INT(artist_id));
+        JVEC_append(atst->albums, abm);
+
+        // also need to add album to temp album cache. Allows songs to efficiently be associated with album
+        JHASHMAP_add(album_cache, CAST_INT(album_id), abm);
         
     }
+    // sort full album vector
     JVEC_sort(vec);
 
+    // now within each artist, the albums must be sorted
+    JVEC* artists = mem->artists;
+    size_t len = JVEC_len(artists);
+    for (size_t i = 0; i < len; i++) {
+        artist* atst = JVEC_get(artists, i);
+        JVEC_sort(atst->albums);
+    }
+
+    return 0;
 }
+
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
