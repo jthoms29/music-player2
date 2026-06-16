@@ -46,12 +46,13 @@ int read_tags(lib_db* lib_db, char* path) {
 
     insert_album(lib_db, artist_id, album, date, orig_date);
     int album_id = retrieve_album(lib_db, artist_id, album, date);
-    printf("album id: %d\n", album_id);
 
     insert_song(lib_db, album_id, title, tracknum, dur_s, bitrate, sample_rate, channels, comment, path);
 
     if (vals1) { taglib_property_free(vals1); }
     if (vals2) { taglib_property_free(vals2); }
+    taglib_tag_free_strings();
+    taglib_file_free(file);
 
     return 0;
 }

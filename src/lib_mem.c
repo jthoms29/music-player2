@@ -1,4 +1,5 @@
 #include <music_player2.h>
+#include <stdio.h>
 
 int artist_compare(const void* a1, const void* a2);
 int album_compare(const void* a1, const void* a2);
@@ -41,9 +42,8 @@ lib_mem* lib_mem_init(void) {
 }
 
 int load_artists(lib_mem* mem, lib_db* db) {
-
     JVEC* vec = mem->artists;
-    int rc;
+
     sqlite3_stmt* pstmt;
     char* sql = "SELECT artist_id, name from artists;";
 
@@ -51,29 +51,136 @@ int load_artists(lib_mem* mem, lib_db* db) {
     int id;
 
     sqlite3* database = db->db;
-    rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
+    int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Failed to load artists\n");
+        return -1;
+    }
+
     while(sqlite3_step(pstmt) == SQLITE_ROW) {
         id = sqlite3_column_int(pstmt, 0);
         name = (char*) sqlite3_column_text(pstmt, 1);
+
         artist* atst = calloc(1, sizeof(*atst));
-        
+        if (!atst) {
+            perror("load_artists(): failed to alloc artist struct");
+            return 1;
+        }
+
+        // create an album vector for this artist
         JVEC* albums = JVEC_new(NULL, album_compare);
+        if (!albums) {
+            fprintf(stderr, "Failed to create album vector for %s\n", name);
+            free(atst);
+            return 1;
+        }
         atst->albums = albums;
 
+        // space for artist's name from sql ret
         char* name_alloc = malloc(strlen(name) + 1);
-
+        if (!name_alloc) {
+            perror("load_artists(): failed to allocate space for artist name");
+            free(atst);
+            return 1;
+        }
         strcpy(name_alloc, name);
         atst->name = name_alloc;
-        printf("%s\n", name_alloc);
 
         JVEC_append(vec, atst);
     }
-    JVEC_sort(vec);
 
+    // put all artists in alphabetical order
+    JVEC_sort(vec);
     return 0;
 }
 
+int load_albums(lib_mem* mem, lib_db* db) {
+    JVEC* vec = mem->albums;
 
+    sqlite3_stmt* pstmt;
+    char* sql = "SELECT album_id, artist_id, title, date, orig_date from albums;";
+
+    // from sql ret
+    char* text;
+
+    sqlite3* database = db->db;
+    int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Failed to load albums\n");
+        return -1;
+    }
+
+    while(sqlite3_step(pstmt) == SQLITE_ROW) {
+        // get name now for error msgs
+        text = (char*) sqlite3_column_text(pstmt, 3);
+    
+
+        album* abm = calloc(1, sizeof(*abm));
+        if (!abm) {
+            perror("load_albums(): failed to alloc album struct");
+            return 1;
+        }
+
+        // alloc song vector
+        JVEC* songs = JVEC_new(NULL, album_compare);
+        if (!songs) {
+            fprintf(stderr, "Failed to allocate song vector for %s\n", text);
+            free(abm);
+            return 1;
+        }
+        abm->songs = songs;
+
+        // aloc space for name string
+        char* title = malloc(strlen(text) + 1);
+        if (!title) {
+            perror("load_artists(): failed to alloc space for album title");
+            free(songs);
+            free(abm);
+            return 1;
+        }
+        abm->title = title;
+
+        // original release date
+        text = (char*) sqlite3_column_text(pstmt, 5);
+        char* orig_date = malloc(strlen(text)+1);
+        if (!orig_date) {
+            perror("load_artists(): failed to alloc space for orig_date");
+            free(title);
+            free(songs);
+            free(abm);
+            return 1;
+        }
+
+        // issue release date
+        text = (char*) sqlite3_column_text(pstmt, 4);
+        char* date = malloc(strlen(text)+1);
+        if (!date) {
+            perror("load_artists(): failed to alloc space for date");
+            free(title);
+            free(orig_date);
+            free(songs);
+            free(abm);
+            return 1;
+        }
+
+        // album id
+        uint8_t album_id = sqlite3_column_int(pstmt, 1);
+        abm->album_id = album_id;
+
+        // artist id 
+        uint8_t artist_id = sqlite3_column_int(pstmt, 2);
+        abm->artist_id = artist_id;
+
+        // add to general albums vector
+        JVEC_append(vec, abm);
+
+        // also need to add to albums vector within artist
+        //==TODO+=
+        
+    }
+    JVEC_sort(vec);
+
+}
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {

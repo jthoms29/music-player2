@@ -43,6 +43,8 @@ typedef struct album {
     char* date;
     char* orig_date;
     uint8_t tracks;
+    uint8_t artist_id;
+    uint8_t album_id;
     JVEC* songs;
 } album;
 
@@ -57,6 +59,10 @@ typedef struct lib_mem {
     JVEC* albums;
     JVEC* songs;
 
+    // allows structs to be nested efficiently when loading library. Key is sql primary key, vals are 
+    // the wanted parent structs
+    JHASHMAP* artist_cache;
+    JHASHMAP* album_cache;
 
 } lib_mem;
 
