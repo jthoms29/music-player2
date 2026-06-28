@@ -5,7 +5,59 @@ int artist_compare(const void* a1, const void* a2);
 int album_compare(const void* a1, const void* a2);
 int song_compare(const void* s1, const void* s2);
 
+void free_artist(artist* atst) {
+    if (atst->name) {
+        free(atst->name);
+    }
+    if (atst->albums) {
+        JVEC_free(&(atst->albums));
+    }
+}
 
+void free_album(album* abm) {
+    if (abm->title) {
+        free(abm->title);
+    }
+    if (abm->artist) {
+        free(abm->artist);
+    }
+    if (abm->genre) {
+        free(abm->genre);
+    }
+    if (abm->date) {
+        free(abm->date);
+    }
+    if (abm->orig_date) {
+        free(abm->orig_date);
+    }
+    if (abm->songs) {
+        JVEC_free(&(abm->songs));
+    }
+}
+
+void free_song(song* sng) {
+    if (sng->path) {
+        free(sng->path);
+    }
+    if (sng->title) {
+        free(sng->title);
+    }
+    if (sng->artist) {
+        free(sng->artist);
+    }
+    if (sng->album) {
+        free(sng->album);
+    }
+    if (sng->genre) {
+        free(sng->genre);
+    }
+    if (sng->date) {
+        free(sng->date);
+    }
+    if (sng->orig_date) {
+        free(sng->orig_date);
+    }
+}
 
 void lib_mem_free(lib_mem** lib_ptr) {
     if (*lib_ptr == NULL) {
@@ -183,6 +235,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
             free(abm);
             return 1;
         }
+        strcpy(title, text);;
         abm->title = title;
 
         // original release date
@@ -195,6 +248,8 @@ int load_albums(lib_mem* mem, lib_db* db) {
             free(abm);
             return 1;
         }
+        strcpy(orig_date, text);
+        abm->orig_date = orig_date;
 
         // issue release date
         text = (char*) sqlite3_column_text(pstmt, 4);
@@ -207,6 +262,8 @@ int load_albums(lib_mem* mem, lib_db* db) {
             free(abm);
             return 1;
         }
+        strcpy(date, text);
+        abm->date = text;
 
         // album id
         uint8_t album_id = sqlite3_column_int(pstmt, 1);
@@ -241,6 +298,44 @@ int load_albums(lib_mem* mem, lib_db* db) {
     return 0;
 }
 
+int load_songs(lib_mem* mem, lib_db* db) {
+    JVEC* vec = mem->songs;
+
+    JHASHMAP* album_cache = mem->album_cache;
+
+    sqlite3_stmt* pstmt;
+    char* sql = 
+    "SELECT song_id, album_id, title, track_num, dur_s, bitrate, sample_rate, channels, " 
+    "comment, path from songs;";
+    
+    // for textual sql returns
+    char* text;
+
+    sqlite3* database = db->db;
+    int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
+    if (rc != SQLITE_DONE) {
+        fprintf(stderr, "Failed to load songs");
+        return -1;
+    }
+
+    while(sqlite3_step(pstmt) == SQLITE_ROW ) {
+
+        song* sng = calloc(1, sizeof(*sng));
+        if (!sng) {
+            perror("load_songs(): failed to alloc song struct");
+            return 1;
+        }
+        
+        text = (char*) sqlite3_column_text(pstmt, 3);
+        char* title = malloc(strlen(text) + 1);
+        if (!title)
+    }
+
+
+
+
+
+}
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
