@@ -26,14 +26,22 @@ int lib_db_init(lib_db* lib_db);
 
 
 typedef struct song {
-    char* path;
+    int song_id;
+    int album_id;
+    int track_num;
+    int dur_s;
+    int bitrate;
+    int sample_rate;
+    int channels;
     char* title;
-    char* artist;
-    char* album;
-    char* genre;
+    char* path;
     char* date;
     char* orig_date;
-    uint8_t track_num;
+    char* comment;
+
+    // not allocated within song init function
+    char* artist_name;
+    char* album_title;
 } song;
 
 typedef struct album {
@@ -42,9 +50,9 @@ typedef struct album {
     char* genre;
     char* date;
     char* orig_date;
-    uint8_t tracks;
-    uint8_t artist_id;
-    uint8_t album_id;
+    int tracks;
+    int artist_id;
+    int album_id;
     JVEC* songs;
 } album;
 
