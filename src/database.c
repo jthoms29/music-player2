@@ -1,13 +1,17 @@
 #include <music_player2.h>
 
-int lib_db_init(lib_db* lib_db) {
+lib_db* lib_db_new() {
     // set everything to null
-    memset(lib_db, 0, sizeof(*lib_db));
+    lib_db* l_db = calloc(1, sizeof(*l_db));
+    if (!l_db) {
+        perror("Failed to allocate new lib_db");
+        return NULL;
+    }
 
     char* err_msg = NULL;
-    int rc = sqlite3_open("lib.db", &lib_db->db);
+    int rc = sqlite3_open("lib.db", &l_db->db);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
@@ -40,7 +44,7 @@ int lib_db_init(lib_db* lib_db) {
         "path TEXT NOT NULL UNIQUE,"
         "FOREIGN KEY (album_id) REFERENCES albums(album_id)"
         ");";
-    rc = sqlite3_exec(lib_db->db, sql_str, 0, 0, &err_msg);
+    rc = sqlite3_exec(l_db->db, sql_str, 0, 0, &err_msg);
     if (rc != SQLITE_OK ) {
         fprintf(stderr, "SQL error: %s\n", err_msg);
         goto uh_oh;
@@ -50,86 +54,86 @@ int lib_db_init(lib_db* lib_db) {
 
     //INSERT ARTIST
     rc = sqlite3_prepare_v2(
-        lib_db->db, 
+        l_db->db, 
         "INSERT OR IGNORE INTO artists(name) VALUES(?);", 
         -1, 
-        &lib_db->insert_artist, 
+        &l_db->insert_artist, 
         NULL
     );
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
     // RETRIEVE ARTIST
     rc = sqlite3_prepare_v2(
-        lib_db->db, 
+        l_db->db, 
         "SELECT artist_id FROM artists WHERE name = ?;",
         -1, 
-        &lib_db->select_artist, 
+        &l_db->select_artist, 
         NULL
     );
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
     //INSERT ALBUM
     rc = sqlite3_prepare_v2(
-        lib_db->db, 
+        l_db->db, 
         "INSERT OR IGNORE INTO albums(artist_id, title, date, orig_date) VALUES(?, ?, ?, ?);", 
         -1, 
-        &lib_db->insert_album, 
+        &l_db->insert_album, 
         NULL
     );
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
     // RETRIEVE ALBUM
     rc = sqlite3_prepare_v2(
-        lib_db->db, 
+        l_db->db, 
         "SELECT album_id FROM albums WHERE artist_id = ? and title = ? and date = ?;",
         -1, 
-        &lib_db->select_album, 
+        &l_db->select_album, 
         NULL
     );
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
     // INSERT SONG
     rc = sqlite3_prepare_v2(
-        lib_db->db, 
+        l_db->db, 
         "INSERT OR IGNORE INTO songs(album_id, title, track_num, dur_s, bitrate, sample_rate, channels, comment, path) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", 
         -1, 
-        &lib_db->insert_song, 
+        &l_db->insert_song, 
         NULL
     );
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(lib_db->db));
+        fprintf(stderr, "Failed to execute statement: %s\n", sqlite3_errmsg(l_db->db));
         goto uh_oh;
     }
 
 
     //set up primary key caches
     JHASHMAP* artist_cache = JHASHMAP_new(string_hash, string_compare);
-    lib_db->artist_cache = artist_cache;
+    l_db->artist_cache = artist_cache;
     JHASHMAP* album_cache = JHASHMAP_new(string_hash, string_compare);
-    lib_db->album_cache = album_cache;
+    l_db->album_cache = album_cache;
     return 0;
 
     uh_oh:
-        sqlite3_finalize(lib_db->insert_artist);
-        sqlite3_finalize(lib_db->select_artist);
-        sqlite3_finalize(lib_db->insert_album);
-        sqlite3_finalize(lib_db->select_album);
-        sqlite3_finalize(lib_db->insert_song);
+        sqlite3_finalize(l_db->insert_artist);
+        sqlite3_finalize(l_db->select_artist);
+        sqlite3_finalize(l_db->insert_album);
+        sqlite3_finalize(l_db->select_album);
+        sqlite3_finalize(l_db->insert_song);
         sqlite3_free(err_msg);        
-        sqlite3_close(lib_db->db);
-        return -1;
+        sqlite3_close(l_db->db);
+        return NULL;
 }
 
 int insert_artist(lib_db* lib_db, char* artist_name) {
