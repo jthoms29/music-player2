@@ -95,7 +95,7 @@ typedef struct lib_mem {
  * @note Database will only be updated if path refers to an audio file readable by taglib
  * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
  * @param[in] path string filepath
- * @pre lib_db must be non-null
+ * @pre lib_db must be initialized with lib_db_init()
  * @post if path refers to a valid audio file, the sqlite3 database within lib_db is updated, adding an entry to the songs table,
  * as well as adding or updating the tables for artist and album associated with song
  * @return 0 on success, anything else on failure
@@ -103,74 +103,82 @@ typedef struct lib_mem {
 int read_tags(lib_db* lib_db, char* path);
 
 /**
- * @brief
- * @details
+ * @brief Scans directory specified in path, updates sql database with songs found within
+ * @details Recursively scans directory specified in path, calls `read_tags()` on each file found
  * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] path string directory path
+ * @pre lib_db must be created with `lib_db_new()`
+ * @post if path refers to a directory containing valid audio files, the sqlite3 database within lib_db is updated,
+ * adding entries to the song table, as well as adding entries to the the artist and album tables associated with the song
+ * @return 0 on success, anything else on failure
  */
-size_t scan_dir(lib_db* lib_db, char* path);
+int scan_dir(lib_db* lib_db, char* path);
 
 
 /* DATABASE FUNCTIONS (database.c) $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
 
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Allocates and returns a new lib_db struct.
+ * @details Allocates and returns a new lib_db struct, which contains:
+ * - A reference to an sqlite3 database, containing tables for artists, albums, and songs. This is created in this function if it doesn't exist already
+ * - Multiple prepared sqlite3 statements for interacting with said database
+ * @note The lib_db struct returned by this function must be freed with `lib_db_free()`
+ * @pre None
+ * @post A new lib_db struct which can be used in the other database functions is returned
+ * @return An initialized lib_db struct
  */
-int lib_db_init(lib_db* lib_db);
+lib_db* lib_db_new();
 
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Inserts given artist name into sqlite3 artist table
+ * @details Artist specified in artist_name is added to sqlite3 database contained in lib_db. If this artist is
+ * already present, nothing happens
+ * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] artist_name string referring to the name of an artist
+ * @pre lib_db must be created with `lib_db_new()`
+ * @post Artist referred to by artist_name is added to database's 'artists' table if not already present 
+ * @return 0 on success, anything else on failure
  */
 int insert_artist(lib_db* lib_db, char* artist_name);
+
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Retrieves artist_id primary key of artist referred to by 'artist_name'
+ * @details Retrieves artist_id primary key of artist referred to by 'artist_name'. Retrieved from 'artists' table contained in
+ * lib_db's sqlite3 database
+ * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] artist_name string referring to the name of an artist
+ * @pre lib_db must be created with `lib_db_new()`
+ * @post primary key associated with artist returned
+ * @return artist primary key if present in database, -1 otherwise
  */
 int retrieve_artist(lib_db* lib_db, char* artist_name);
 
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Inserts gived album into sqlite3 album table
+ * @details album specified in `title` is added to sqlite3 database contained in lib_db. 'date' and 'orig_date' tags
+ * associated with album also inserted, as well as 'artist_id' foreign key - associated primary key in 'artists' table
+ * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] artist_id primary key for artist associated with album from database's 'artists' table
+ * @param[in] title album title
+ * @param[in] date album's 'date' tag
+ * @param[in] orig_date album's 'orginal_date' tag
+ * @pre artist associated with album must already be present in database's 'artist' table. artist_id must be the primary key associated with the album artist
+ * @post album is added to database's 'albums table
+ * @return 0 on success, anything else on failure
  */
 int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date);
+
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
+ * @brief Retrieves album_id primary key or album referred to by 'album_name'
+ * @details Retrieves album_id primary key or album referred to by 'album_name' by artist referred to by 'artist_id'
+ * with date tag 'date'. 
+ * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] artist_id primary key for artist associated with album from database's 'artists' table
+ * @param[in] album_name album title
+ * @param[in] date album's 'date' tag
+ * @pre lib_db must be created with `lib_db_new()`, dkfjdjf
  * @post
  * @return
  */
