@@ -156,7 +156,7 @@ int insert_artist(lib_db* lib_db, char* artist_name);
 int retrieve_artist(lib_db* lib_db, char* artist_name);
 
 /**
- * @brief Inserts gived album into sqlite3 album table
+ * @brief Inserts given album into sqlite3 album table
  * @details album specified in `title` is added to sqlite3 database contained in lib_db. 'date' and 'orig_date' tags
  * associated with album also inserted, as well as 'artist_id' foreign key - associated primary key in 'artists' table
  * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
@@ -164,8 +164,10 @@ int retrieve_artist(lib_db* lib_db, char* artist_name);
  * @param[in] title album title
  * @param[in] date album's 'date' tag
  * @param[in] orig_date album's 'orginal_date' tag
- * @pre artist associated with album must already be present in database's 'artist' table. artist_id must be the primary key associated with the album artist
- * @post album is added to database's 'albums table
+ * @pre lib_db must be created with `lib_db_new()`
+ * artist associated with album must already be present in database's 'artist' table
+ * artist_id must be the primary key associated with the album artist
+ * @post album is added to database's 'albums' table
  * @return 0 on success, anything else on failure
  */
 int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date);
@@ -178,11 +180,33 @@ int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* o
  * @param[in] artist_id primary key for artist associated with album from database's 'artists' table
  * @param[in] album_name album title
  * @param[in] date album's 'date' tag
- * @pre lib_db must be created with `lib_db_new()`, dkfjdjf
- * @post
- * @return
+ * @pre lib_db must be created with `lib_db_new()`
+ * @post if album exists in database, its primary key is returned
+ * @return album's primary key on success, -1 on failure
  */
 int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date);
+
+/**
+ * @brief Inserts given song into sqlite3 songs table
+ * @details Song from specified path is added to sqlite3 database contained in lib_db. Associated tags as well as album_id foreign key inserted
+ * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
+ * @param[in] album_id primary key for album associated with song from database's 'songs' table
+ * @param[in] song_title song's title
+ * @param[in] tracknum song's track number within associated album
+ * @param[in] dur_s song's duration in seconds
+ * @param[in] bitrate song's bitrate
+ * @param[in] sample_rate song's samplerate
+ * @param[in] channels song's channels (mono, stereo)
+ * @param[in] comment contents of song's comment tag
+ * @param[in] path path to song's file
+ * @pre lib_db must be created with `lib_db_new()`
+ * album associated with song must already be present in database's 'albums' table
+ * album id must be associated album's primary key
+ * @post song is added to database's 'songs' table
+ * @return 0 on success, -1 on failure
+ */
+int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
+
 
 /**
  * @brief
@@ -194,8 +218,7 @@ int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date);
  * @post
  * @return
  */
-int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
-
+void lib_db_free(lib_db** lib_db_ptr);
 
 /* IN-MEM LIBRARY FUNCTIONS (lib_mem.c) $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
