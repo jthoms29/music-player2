@@ -58,7 +58,8 @@ int read_tags(lib_db* lib_db, char* path) {
 }
 
 
-size_t scan_dir(lib_db* lib_db, char* path) {
+// size_t ??
+int scan_dir(lib_db* lib_db, char* path) {
     struct dirent* de; // pointer for directory entry
     struct stat statbuf;
     char* subpath;

@@ -234,3 +234,14 @@ int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, in
 
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
+
+
+void lib_db_free(lib_db** lib_db_ptr) {
+    lib_db* l_db = *lib_db_ptr;
+    // free all prepared statements
+    sqlite3_finalize(l_db->insert_artist);
+    sqlite3_finalize(l_db->select_artist);
+    sqlite3_finalize(l_db->insert_album);
+    sqlite3_finalize(l_db->select_album);
+    sqlite3_finalize(l_db->insert_song);
+}

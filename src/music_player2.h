@@ -209,14 +209,12 @@ int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, in
 
 
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Frees lib_db struct
+ * @details Frees lib_db struct created with `lib_db_new()`
+ * @param[in, out] lib_db_ptr indirect pointer to lib_db_struct
+ * @pre lib_db_ptr must have been created with `lib_db_new()`
+ * @post all allocated fields within struct are freed, as well as the struct itself. The lib_db* that lib_db_ptr points to is set to NULL
+ * @return none
  */
 void lib_db_free(lib_db** lib_db_ptr);
 

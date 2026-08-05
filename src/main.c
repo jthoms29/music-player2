@@ -4,10 +4,9 @@
 
 
 int main(int argc, char** argv) {
-    lib_db lib_db;
-    lib_db_init(&lib_db);
+    lib_db* lib_db = lib_db_new();
     //scan_dir(&lib_db, argv[1]);
 
     lib_mem* mem = lib_mem_init();
-    load_artists(mem, &lib_db);
+    load_artists(mem, lib_db);
 }

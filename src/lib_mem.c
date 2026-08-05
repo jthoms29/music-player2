@@ -410,7 +410,20 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
+    load_artists(mem, db);
+    load_albums(mem, db);
+    load_songs(mem, db);
 
+    return 0;
+}
+
+void debug_print_mem(lib_mem* mem) {
+    JVEC* artists = mem->artists;
+
+    for (size_t i = 0; i < JVEC_len(artists); i++) {
+        artist* atst = JVEC_get(artists, i);
+        printf("%s\n", atst->name);
+    }
 }
 
 
