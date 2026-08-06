@@ -1,6 +1,7 @@
 #include <music_player2.h>
 
 lib_db* lib_db_new() {
+
     // set everything to null
     lib_db* l_db = calloc(1, sizeof(*l_db));
     if (!l_db) {
@@ -244,4 +245,12 @@ void lib_db_free(lib_db** lib_db_ptr) {
     sqlite3_finalize(l_db->insert_album);
     sqlite3_finalize(l_db->select_album);
     sqlite3_finalize(l_db->insert_song);
+    sqlite3_close(l_db->db);
+
+    // free primary key caches
+    JHASHMAP_free(&l_db->artist_cache);
+    JHASHMAP_free(&l_db->album_cache);
+
+    free(l_db);
+    l_db = NULL;
 }

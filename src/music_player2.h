@@ -221,26 +221,25 @@ void lib_db_free(lib_db** lib_db_ptr);
 /* IN-MEM LIBRARY FUNCTIONS (lib_mem.c) $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
 /**
- * @brief
- * @details
- * @note
- * @param[in, out]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Creates data structure to hold all database info in memory
+ * @details Creates a struct containing multiple vectors which hold all database info.
+ * Separate vectors for artists, albums, songs. Nested structure, artist also contains references to associated albums,
+ * albums contain references to associated songs
+ * @note Must be freed with `lib_mem_free()`
+ * @pre None
+ * @post New lib_mem struct is created and returned
+ * @return New lib_mem struct
  */
-lib_mem* lib_mem_init(void);
+lib_mem* lib_mem_new(void);
 
 /**
- * @brief
- * @details
- * @note
+ * @brief Load all info from artists table into memory
+ * @details Load all info from artists table from sqlite3 database in `db` into artists vector in `mem`
  * @param[in, out]
  * @param[in]
- * @pre
- * @post
- * @return
+ * @pre `mem` must be created with `lib_mem_new, `db` must be created with `lib_db_new`
+ * @post Library info from sqlite3 database held in `db` loaded into `mem`'s data structures
+ * @return 0 on success, anything else on failure
  */
 int load_artists(lib_mem* mem, lib_db* db);
 #endif

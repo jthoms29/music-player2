@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <tag_c.h>
+#include <taglib/tag_c.h>
 #include <music_player2.h>
 #include <sqlite3.h>
 

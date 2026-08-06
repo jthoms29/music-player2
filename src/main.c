@@ -7,6 +7,6 @@ int main(int argc, char** argv) {
     lib_db* lib_db = lib_db_new();
     //scan_dir(&lib_db, argv[1]);
 
-    lib_mem* mem = lib_mem_init();
+    lib_mem* mem = lib_mem_new();
     load_artists(mem, lib_db);
 }

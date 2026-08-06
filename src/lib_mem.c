@@ -19,9 +19,6 @@ void free_album(album* abm) {
     if (abm->title) {
         free(abm->title);
     }
-    if (abm->artist) {
-        free(abm->artist);
-    }
     if (abm->genre) {
         free(abm->genre);
     }
@@ -77,7 +74,7 @@ void lib_mem_free(lib_mem** lib_ptr) {
 }
 
 
-lib_mem* lib_mem_init(void) {
+lib_mem* lib_mem_new(void) {
     lib_mem* lib = calloc(1, sizeof(*lib));
     if (!lib) {
         perror("Could not allocate in memory library");
@@ -381,7 +378,6 @@ int load_songs(lib_mem* mem, lib_db* db) {
         assert(abm);
 
         // extra info associated with song, strings not allocated here so DON'T FREE WHEN FREEING SONG
-        sng->artist_name = abm->artist;
         sng->album_title = abm->title;
 
         JVEC_append(abm->songs, sng);
