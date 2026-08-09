@@ -124,7 +124,7 @@ lib_db* lib_db_new() {
     l_db->artist_cache = artist_cache;
     JHASHMAP* album_cache = JHASHMAP_new(string_hash, string_compare);
     l_db->album_cache = album_cache;
-    return 0;
+    return l_db;
 
     uh_oh:
         sqlite3_finalize(l_db->insert_artist);

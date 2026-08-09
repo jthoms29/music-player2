@@ -131,11 +131,16 @@ int load_artists(lib_mem* mem, lib_db* db) {
 
     sqlite3* database = db->db;
     int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
-    if (rc != SQLITE_DONE) {
+    if (rc != SQLITE_OK) {
+        sqlite3_errmsg(database);
         fprintf(stderr, "Failed to load artists\n");
         return -1;
     }
 
+
+    if (sqlite3_step(pstmt) != SQLITE_ROW) {
+        printf("FUCK\n");
+    }
     while(sqlite3_step(pstmt) == SQLITE_ROW) {
         id = sqlite3_column_int(pstmt, 0);
         name = (char*) sqlite3_column_text(pstmt, 1);
@@ -164,6 +169,9 @@ int load_artists(lib_mem* mem, lib_db* db) {
         }
         strcpy(name_alloc, name);
         atst->name = name_alloc;
+
+        // debug
+        printf("name: %s\n", name_alloc);
 
         JVEC_append(vec, atst);
 
