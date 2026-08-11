@@ -9,5 +9,6 @@ int main(int argc, char** argv) {
 
     lib_mem* mem = lib_mem_new();
     scan_dir(lib_db, argv[1]);
-    load_artists(mem, lib_db);
+    load_library(mem, lib_db);
+    debug_print_mem(mem);
 }

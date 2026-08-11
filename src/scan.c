@@ -65,7 +65,6 @@ int scan_dir(lib_db* lib_db, char* path) {
     char* subpath;
 
 
-    printf("%s\n", path);
     DIR* dr = opendir(path);
     if (!dr) {
         printf("ERROR: could not open directory %s\n", path);

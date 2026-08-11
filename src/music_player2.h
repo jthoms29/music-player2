@@ -242,4 +242,11 @@ lib_mem* lib_mem_new(void);
  * @return 0 on success, anything else on failure
  */
 int load_artists(lib_mem* mem, lib_db* db);
+
+
+
+void debug_print_mem(lib_mem* mem);
+
+int load_library(lib_mem* mem, lib_db* db);
 #endif
+

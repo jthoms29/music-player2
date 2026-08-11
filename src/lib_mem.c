@@ -132,31 +132,27 @@ int load_artists(lib_mem* mem, lib_db* db) {
     sqlite3* database = db->db;
     int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
     if (rc != SQLITE_OK) {
-        sqlite3_errmsg(database);
-        fprintf(stderr, "Failed to load artists\n");
+        fprintf(stderr, "Failed to load artists %s\n", sqlite3_errmsg(database));
         return -1;
     }
 
 
-    if (sqlite3_step(pstmt) != SQLITE_ROW) {
-        printf("FUCK\n");
-    }
+    artist* atst;
     while(sqlite3_step(pstmt) == SQLITE_ROW) {
         id = sqlite3_column_int(pstmt, 0);
         name = (char*) sqlite3_column_text(pstmt, 1);
 
-        artist* atst = calloc(1, sizeof(*atst));
+        atst = calloc(1, sizeof(*atst));
         if (!atst) {
             perror("load_artists(): failed to alloc artist struct");
-            return 1;
+            goto uh_oh;
         }
 
         // create an album vector for this artist
         JVEC* albums = JVEC_new(NULL, album_compare);
         if (!albums) {
             fprintf(stderr, "Failed to create album vector for %s\n", name);
-            free(atst);
-            return 1;
+            goto uh_oh;
         }
         atst->albums = albums;
 
@@ -164,14 +160,10 @@ int load_artists(lib_mem* mem, lib_db* db) {
         char* name_alloc = malloc(strlen(name) + 1);
         if (!name_alloc) {
             perror("load_artists(): failed to allocate space for artist name");
-            free(atst);
-            return 1;
+            goto uh_oh;
         }
         strcpy(name_alloc, name);
         atst->name = name_alloc;
-
-        // debug
-        printf("name: %s\n", name_alloc);
 
         JVEC_append(vec, atst);
 
@@ -184,7 +176,9 @@ int load_artists(lib_mem* mem, lib_db* db) {
     return 0;
 
     uh_oh:
-
+    // free current artist that caused error
+    free_artist(atst);
+    return 1;
 }
 
 int load_albums(lib_mem* mem, lib_db* db) {
@@ -290,8 +284,6 @@ int load_albums(lib_mem* mem, lib_db* db) {
     uh_oh:
     // free album which caused failure
     free_album(abm);
-    // then free the rest
-    JVEC_free(&(mem->albums));
     return 1;
 }
 
@@ -407,26 +399,49 @@ int load_songs(lib_mem* mem, lib_db* db) {
     uh_oh:
     // free song which caused failure
     free_song(sng);
-    // then free the rest
-    JVEC_free(&(mem->songs));
     return 1;
 }
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
-    load_artists(mem, db);
-    load_albums(mem, db);
-    load_songs(mem, db);
+    if (load_artists(mem, db)) {
+        fprintf(stderr, "failed to load artists in load_library()\n");
+        return 1;
+    }
+    if (load_albums(mem, db)) {
+        fprintf(stderr, "Failed to load albums in load_library()\n");
+        return 1;
+    }
+    if (load_songs(mem, db)) {
+        fprintf(stderr, "Failed to load songs in load_library()\n");
+        return 1;
+    }
 
     return 0;
 }
 
 void debug_print_mem(lib_mem* mem) {
     JVEC* artists = mem->artists;
+    //JVEC* albums = mem->albums;
+    //JVEC* songs = mem->songs;
 
+    printf("ARTISTS:\n");
     for (size_t i = 0; i < JVEC_len(artists); i++) {
         artist* atst = JVEC_get(artists, i);
         printf("%s\n", atst->name);
+        printf("  artist's albums:\n");
+
+        JVEC* a_albums = atst->albums;
+        for (size_t j = 0; j < JVEC_len(a_albums); j++) {
+            album* a_abm = JVEC_get(a_albums, j);
+            printf("    %s\n", a_abm->title);
+
+            JVEC* a_songs = a_abm->songs;
+            for (size_t k = 0; k < JVEC_len(a_songs); k++) {
+                song* a_sng = JVEC_get(a_songs, k);
+                printf("      %s\n", a_sng->title);
+            }
+        }
     }
 }
 
