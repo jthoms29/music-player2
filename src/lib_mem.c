@@ -181,6 +181,7 @@ int load_artists(lib_mem* mem, lib_db* db) {
     return 1;
 }
 
+void print_album(album* abm);
 int load_albums(lib_mem* mem, lib_db* db) {
     JVEC* vec = mem->albums;
 
@@ -196,7 +197,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
 
     sqlite3* database = db->db;
     int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
-    if (rc != SQLITE_DONE) {
+    if (rc != SQLITE_OK) {
         fprintf(stderr, "Failed to load albums\n");
         return -1;
     }
@@ -204,7 +205,11 @@ int load_albums(lib_mem* mem, lib_db* db) {
     album* abm;
     while(sqlite3_step(pstmt) == SQLITE_ROW) {
         // get name now for error msgs
-        text = (char*) sqlite3_column_text(pstmt, 3);
+        text = (char*) sqlite3_column_text(pstmt, 2);
+        if (!text) {
+            fprintf(stderr, "load_albums(): Failed to get album title\n");
+            goto uh_oh;
+        }
    
         abm = calloc(1, sizeof(*abm));
         if (!abm) {
@@ -213,7 +218,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
         }
 
         // alloc song vector
-        JVEC* songs = JVEC_new(NULL, album_compare);
+        JVEC* songs = JVEC_new(NULL, song_compare);
         if (!songs) {
             fprintf(stderr, "Failed to allocate song vector for %s\n", text);
             goto uh_oh;
@@ -226,10 +231,10 @@ int load_albums(lib_mem* mem, lib_db* db) {
             perror("load_artists(): failed to alloc space for album title");
             goto uh_oh;
         }
-        strcpy(abm->title, text);;
+        strcpy(abm->title, text);
 
         // original release date
-        text = (char*) sqlite3_column_text(pstmt, 5);
+        text = (char*) sqlite3_column_text(pstmt, 4);
         abm->orig_date = malloc(strlen(text)+1);
         if (!abm->orig_date) {
             perror("load_artists(): failed to alloc space for orig_date");
@@ -239,7 +244,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
 
 
         // issue release date
-        text = (char*) sqlite3_column_text(pstmt, 4);
+        text = (char*) sqlite3_column_text(pstmt, 3);
         abm->date = malloc(strlen(text)+1);
         if (!abm->date) {
             perror("load_artists(): failed to alloc space for date");
@@ -248,27 +253,31 @@ int load_albums(lib_mem* mem, lib_db* db) {
         strcpy(abm->date, text);
 
         // album id
-        int album_id = sqlite3_column_int(pstmt, 1);
+        int album_id = sqlite3_column_int(pstmt, 0);
         abm->album_id = album_id;
 
         // artist id 
-        int artist_id = sqlite3_column_int(pstmt, 2);
+        int artist_id = sqlite3_column_int(pstmt, 1);
         abm->artist_id = artist_id;
+
+
+        // also need extra info from artist
+        artist* atst = JHASHMAP_get(artist_cache, CAST_INT(artist_id));
+        assert(atst);
+        abm->artist_name = atst->name;
 
         // add to general albums vector
         JVEC_append(vec, abm);
-
-        // also need to add to albums vector within artist
-        artist* atst = JHASHMAP_get(artist_cache, CAST_INT(artist_id));
-        assert(atst);
+        // add to artist's album vector
         JVEC_append(atst->albums, abm);
-
         // also need to add album to temp album cache. Allows songs to efficiently be associated with album
         JHASHMAP_add(album_cache, CAST_INT(album_id), abm);
         
     }
+   
     
     // sort full album vector
+    printf("%ld vec len\n", vec->len);
     JVEC_sort(vec);
 
     // now within each artist the albums must be sorted
@@ -287,6 +296,8 @@ int load_albums(lib_mem* mem, lib_db* db) {
     return 1;
 }
 
+void print_song(song* sng);
+
 int load_songs(lib_mem* mem, lib_db* db) {
     JVEC* vec = mem->songs;
 
@@ -295,15 +306,15 @@ int load_songs(lib_mem* mem, lib_db* db) {
     sqlite3_stmt* pstmt;
     char* sql = 
     "SELECT song_id, album_id, track_num, dur_s, bitrate, sample_rate, channels, "
-    "title, path, date, orig_date, commen from songs;";
+    "title, path, comment from songs;";
     
     // for textual sql returns
     char* text;
 
     sqlite3* database = db->db;
     int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
-    if (rc != SQLITE_DONE) {
-        fprintf(stderr, "Failed to load songs");
+    if (rc != SQLITE_OK) {
+        fprintf(stderr, "Failed to load songs\n");
         return -1;
     }
 
@@ -317,7 +328,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
         }
        
         // title
-        text = (char*) sqlite3_column_text(pstmt, 8);
+        text = (char*) sqlite3_column_text(pstmt, 7);
         sng->title = malloc(strlen(text) + 1);
         if (!sng->title) {
             perror("load_songs(): failed to alloc space for song title");
@@ -326,7 +337,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
         strcpy(sng->title, text);
 
         // path
-        text = (char*) sqlite3_column_text(pstmt, 9);
+        text = (char*) sqlite3_column_text(pstmt, 8);
         sng->path = malloc(strlen(text) + 1);
         if (!sng->path) {
             perror("load_songs(): failed to alloc space for song path");
@@ -334,26 +345,9 @@ int load_songs(lib_mem* mem, lib_db* db) {
         }
         strcpy(sng->path, text);
 
-        // date
-        text = (char*) sqlite3_column_text(pstmt, 10);
-        sng->date = malloc(strlen(text) + 1);
-        if (!sng->date) {
-            perror("load_songs(): failed to alloc space for song date");
-            goto uh_oh;
-        }
-        strcpy(sng->date, text);
-
-        // orig_date
-        text = (char*) sqlite3_column_text(pstmt, 11);
-        sng->orig_date = malloc(strlen(text) + 1);
-        if (!sng->orig_date) {
-            perror("load_songs(): failed to alloc space for song orig_date");
-            goto uh_oh;
-        }
-        strcpy(sng->orig_date, text);
 
         // comment
-        text = (char*) sqlite3_column_text(pstmt, 12);
+        text = (char*) sqlite3_column_text(pstmt, 9);
         sng->comment = malloc(strlen(text) + 1);
         if (!sng->comment) {
             perror("load_songs(): failed to alloc space for song comment");
@@ -362,16 +356,14 @@ int load_songs(lib_mem* mem, lib_db* db) {
         strcpy(sng->comment, text);
 
         // int fields
-        sng->song_id = sqlite3_column_int(pstmt, 1);
-        sng->album_id = sqlite3_column_int(pstmt, 2);
-        sng->track_num = sqlite3_column_int(pstmt, 3);
-        sng->dur_s = sqlite3_column_int(pstmt, 4);
-        sng->bitrate = sqlite3_column_int(pstmt, 5);
-        sng->sample_rate = sqlite3_column_int(pstmt, 6);
-        sng->channels = sqlite3_column_int(pstmt, 7);
+        sng->song_id = sqlite3_column_int(pstmt, 0);
+        sng->album_id = sqlite3_column_int(pstmt, 1);
+        sng->track_num = sqlite3_column_int(pstmt, 2);
+        sng->dur_s = sqlite3_column_int(pstmt, 3);
+        sng->bitrate = sqlite3_column_int(pstmt, 4);
+        sng->sample_rate = sqlite3_column_int(pstmt, 5);
+        sng->channels = sqlite3_column_int(pstmt, 6);
 
-        // add to general songs vector
-        JVEC_append(vec, sng);
 
         // also need to add to vector associated album
         album* abm = JHASHMAP_get(album_cache, CAST_INT(sng->album_id));
@@ -379,7 +371,14 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
         // extra info associated with song, strings not allocated here so DON'T FREE WHEN FREEING SONG
         sng->album_title = abm->title;
+        sng->artist_name = abm->artist_name;
+        sng->date =  abm->date;
+        sng->orig_date = abm->date;
 
+        print_song(sng);
+        // add to general songs vector
+        JVEC_append(vec, sng);
+        // add to album's songs vector
         JVEC_append(abm->songs, sng);
     }
 
@@ -439,30 +438,36 @@ void debug_print_mem(lib_mem* mem) {
             JVEC* a_songs = a_abm->songs;
             for (size_t k = 0; k < JVEC_len(a_songs); k++) {
                 song* a_sng = JVEC_get(a_songs, k);
-                printf("      %s\n", a_sng->title);
+                printf("      %d: %s\n", a_sng->track_num ,a_sng->title);
             }
         }
     }
 }
 
+void print_song(song* sng) {
+    printf("id: %d\nalbum_id: %d\ntrack num: %d\ndur_s: %d\nbitrate: %d\nsample rate: %d\nchannels: %d\ntitle: %s\npath: %s\ncomment: %s\nartist %s\ntitle: %s\ndate: %s\norig_date: %s\n", sng->song_id, sng->album_id, sng->track_num, sng->dur_s, sng->bitrate, sng->sample_rate, sng->channels, sng->title, sng->path, sng->comment, sng->artist_name, sng->album_title, sng->date, sng->orig_date);
+}
+void print_album(album* abm) {
+    printf("id: %d\na_id: %d\ntracks: %d\ntitle: %s\ngenre: %s\ndate: %s\norig_date: %s\nartist: %s\n", abm->album_id, abm->artist_id, abm->tracks, abm->title, abm->genre, abm->date, abm->orig_date, abm->artist_name);
+}
 
 int artist_compare(const void* a1, const void* a2) {
-    artist* _a1 = (artist*) a1;
-    artist* _a2 = (artist*) a2;
+    artist* _a1 = *(artist**) a1;
+    artist* _a2 = *(artist**) a2;
     return strcmp(_a1->name, _a2->name);
 }
 
 int album_compare(const void* a1, const void* a2) {
-    album* _a1 = (album*) a1;
-    album* _a2 = (album*) a2;
+    album* _a1 = *(album**) a1;
+    album* _a2 = *(album**) a2;
 
 
-    return _a2->orig_date - _a1->orig_date;
+    return strcmp(_a1->orig_date, _a2->orig_date);
 }
 
 int song_compare(const void* s1, const void* s2) {
-    song* _s1 = (song*) s1;
-    song* _s2 = (song*) s2;
+    song* _s1 = *(song**) s1;
+    song* _s2 = *(song**) s2;
 
-    return _s2->track_num - _s1->track_num;
+    return _s1->track_num - _s2->track_num;
 }
