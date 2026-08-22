@@ -9,6 +9,10 @@ int main(int argc, char** argv) {
 
     lib_mem* mem = lib_mem_new();
     scan_dir(lib_db, argv[1]);
-    load_library(mem, lib_db);
+    if (load_library(mem, lib_db)) {
+        lib_mem_free(&mem);
+        return 1;
+    }
     debug_print_mem(mem);
+    lib_mem_free(&mem);
 }

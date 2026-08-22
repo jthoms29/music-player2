@@ -62,13 +62,6 @@ void lib_mem_free(lib_mem** lib_ptr) {
     if ((*lib_ptr)->songs) {
         JVEC_free(&(*lib_ptr)->songs); 
     }
-    if ((*lib_ptr)->artists) {
-        JVEC_free(&(*lib_ptr)->artists);
-    }
-    if ((*lib_ptr)->artists) {
-        JVEC_free(&(*lib_ptr)->artists);
-    }
-
     free(*lib_ptr);
     *lib_ptr = NULL;
 }

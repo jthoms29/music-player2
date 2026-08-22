@@ -248,5 +248,6 @@ int load_artists(lib_mem* mem, lib_db* db);
 void debug_print_mem(lib_mem* mem);
 
 int load_library(lib_mem* mem, lib_db* db);
+void lib_mem_free(lib_mem** lib_ptr);
 #endif
 
