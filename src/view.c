@@ -4,6 +4,8 @@
 #define S_HEIGHT 30
 #define S_WIDTH 10
 
+#define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
+
 typedef struct imodel {
     // in memory library
     lib_mem* lib;
@@ -38,7 +40,16 @@ void menu_listW(WINDOW* w, JVEC* vec, size_t top, size_t selected, size_t wdt, s
     werase(w);
     box(w, 0, 0);
     for (size_t i = 0; i < hgt; i++) {
-        mvprintw(i, 0, "%s", ((song*)JVEC_get(vec, i))->title);
+
+        // if currently selected, invert colors of string
+        if (i == selected) {
+            for (size_t j = 0; j < wdt; j++) {
+                wattron(w, COLOR_PAIR(1));
+                mvwaddnstr(w, i, 0, ((song*)JVEC_get(vec, i))->title, wdt);
+                wattroff(w, COLOR_PAIR(1));
+            }
+        }
+        mvwaddnstr(w,i, 0, ((song*)JVEC_get(vec, i))->title, wdt);
     }
 }
 
@@ -55,6 +66,11 @@ WINDOW* view_new() {
 
     // don't block on getch();
     timeout(0);
+
+    // make it so black squares can be drawn to screen
+    start_color();
+    use_default_colors();
+    init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
     return newwin(S_HEIGHT, S_WIDTH, 0, 0);
 }
@@ -107,3 +123,4 @@ static inline void change_column(imodel* im, int8_t dir) {
         return;
     }
     im->col_idx += dir;
+}
