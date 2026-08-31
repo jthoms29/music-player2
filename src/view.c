@@ -124,3 +124,22 @@ static inline void change_column(imodel* im, int8_t dir) {
     }
     im->col_idx += dir;
 }
+
+void view_loop() {
+    int rows, cols;
+    int menu_wdt, menu_hgt;
+    
+    WINDOW *atst_menu, *abm_menu, *sng_menu;
+    
+    atst_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
+    abm_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
+    sng_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
+
+    for(;;) {
+        // dynamically resize all windows accounting for current screen size
+        getmaxyx(stdscr, rows, cols);
+        menu_wdt = cols/3;
+        menu_hgt = rows; //placeholder
+
+    }
+}

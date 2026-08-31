@@ -44,6 +44,7 @@ $(BIN_DIR)/main: $(OBJS) | $(BIN_DIR)
 	-lsqlite3 \
 	-lm \
 	-lstdc++ \
+	-lncurses \
 	-o $@
 
 
