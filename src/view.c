@@ -35,6 +35,13 @@ imodel* imodel_new(lib_mem* lib) {
     return im;
 }
 
+char* album_string(void* abm) {
+    if (!abm) {
+        return NULL;
+    }
+    
+    album* _abm = (album*) abm
+}
 
 void menu_listW(WINDOW* w, JVEC* vec, size_t top, size_t selected, size_t wdt, size_t hgt) {
     werase(w);
