@@ -7,30 +7,22 @@
 #define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
 
 typedef struct imodel {
-    // in memory library
-    lib_mem* lib;
-
     uint8_t col_idx;
 
-    size_t artist_top;
-    size_t artist_idx;
+    size_t row_top[3];
+    size_t row_idx[3];
 
-    size_t album_top;
-    size_t album_idx;
 
-    size_t song_top;
-    size_t song_idx;
 
 } imodel;
 
-imodel* imodel_new(lib_mem* lib) {
+imodel* imodel_new() {
     imodel* im = calloc(1, sizeof(*im));
     if (!im) {
         perror("imodel_new(): could not allocate new imodel");
         return NULL;
     }
 
-    im->lib = lib;
 
     return im;
 }
@@ -43,7 +35,7 @@ char* album_string(void* abm) {
     album* _abm = (album*) abm
 }
 
-void menu_listW(WINDOW* w, JVEC* vec, size_t top, size_t selected, size_t wdt, size_t hgt) {
+void menu_list(WINDOW* w, JVEC* vec, size_t top, size_t selected, size_t wdt, size_t hgt) {
     werase(w);
     box(w, 0, 0);
     for (size_t i = 0; i < hgt; i++) {
@@ -132,9 +124,13 @@ static inline void change_column(imodel* im, int8_t dir) {
     im->col_idx += dir;
 }
 
-void view_loop() {
+void view_loop(lib_mem* lib) {
     int rows, cols;
     int menu_wdt, menu_hgt;
+
+    JVEC* atsts = lib->artists;
+    JVEC* abms = lib->albums;
+    JVEC* sngs = lib->songs;
     
     WINDOW *atst_menu, *abm_menu, *sng_menu;
     
@@ -142,11 +138,51 @@ void view_loop() {
     abm_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
     sng_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
 
+    // init imodel
+    imodel* imod = imodel_new();
+
+    int ch;
     for(;;) {
         // dynamically resize all windows accounting for current screen size
         getmaxyx(stdscr, rows, cols);
         menu_wdt = cols/3;
         menu_hgt = rows; //placeholder
+        wresize(atst_menu, rows, cols);
+        wresize(abm_menu, rows, cols);
+        wresize(sng_menu, rows, cols);
 
+        // render all windows
+        menu_list(atst_menu, atsts, imod->row_top[0], imod->row_idx[0], rows, cols);
+        menu_list(abm_menu, abms, imod->row_top[1], imod->row_idx[1], rows, cols);
+        menu_list(sng_menu, sngs, imod->row_top[2], imod->row_idx[2], rows, cols);
+
+        // get input
+        ch = getch();
+
+        switch(ch) {
+            //scroll current win down
+            case 'k':
+            case 'K':
+                scroll_menu(imod, 1);
+                break;
+            //scroll current win up
+            case 'j':
+            case 'J':
+                scroll_menu(imod, -1);
+                break;
+            //move to prev column
+            case 'h':
+            case 'H':
+                change_column(imod, -1);
+                break;
+            ///move to next column
+            case 'l':
+            case 'L':
+                change_column(imod, 1);
+                break;
+        }
+
+
+        
     }
 }
