@@ -53,14 +53,14 @@ void lib_mem_free(lib_mem** lib_ptr) {
         return;
     }
 
-    if ((*lib_ptr)->artists) {
-        JVEC_free(&(*lib_ptr)->artists); // :-)
+    if ((*lib_ptr)->vecs[0]) {
+        JVEC_free(&(*lib_ptr)->vecs[0]); // :-)
     }
-    if ((*lib_ptr)->albums) {
-        JVEC_free(&(*lib_ptr)->albums); 
+    if ((*lib_ptr)->vecs[1]) {
+        JVEC_free(&(*lib_ptr)->vecs[1]); 
     }
-    if ((*lib_ptr)->songs) {
-        JVEC_free(&(*lib_ptr)->songs); 
+    if ((*lib_ptr)->vecs[2]) {
+        JVEC_free(&(*lib_ptr)->vecs[2]); 
     }
     free(*lib_ptr);
     *lib_ptr = NULL;
@@ -74,20 +74,23 @@ lib_mem* lib_mem_new(void) {
         return NULL;
     }
 
-    lib->artists = JVEC_new(NULL, artist_compare);
-    if (!lib->artists) {
+    // artists vec
+    lib->vecs[0] = JVEC_new(NULL, artist_compare);
+    if (!lib->vecs[0]) {
         fprintf(stderr, "Failed to create artists vector\n");
         goto uh_oh;
     }
 
-    lib->albums = JVEC_new(NULL, album_compare);
-    if (!lib->albums) {
+    // albums vec
+    lib->vecs[1] = JVEC_new(NULL, album_compare);
+    if (!lib->vecs[1]) {
         fprintf(stderr, "Failed to create albums vector\n");
         goto uh_oh;
     }
 
-    lib->songs = JVEC_new(NULL, song_compare);
-    if (!lib->songs) {
+    // songs vec
+    lib->vecs[2] = JVEC_new(NULL, song_compare);
+    if (!lib->vecs[2]) {
         fprintf(stderr, "Failed to create songs vector\n");
         goto uh_oh;
     }
@@ -113,7 +116,7 @@ lib_mem* lib_mem_new(void) {
 }
 
 int load_artists(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->artists;
+    JVEC* vec = mem->vecs[0];
     JHASHMAP* cache = mem->artist_cache;
 
     sqlite3_stmt* pstmt;
@@ -176,7 +179,7 @@ int load_artists(lib_mem* mem, lib_db* db) {
 
 void print_album(album* abm);
 int load_albums(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->albums;
+    JVEC* vec = mem->vecs[1];
 
     JHASHMAP* artist_cache = mem->artist_cache;
     JHASHMAP* album_cache = mem->album_cache;
@@ -274,7 +277,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
     JVEC_sort(vec);
 
     // now within each artist the albums must be sorted
-    JVEC* artists = mem->artists;
+    JVEC* artists = mem->vecs[0];
     size_t len = JVEC_len(artists);
     for (size_t i = 0; i < len; i++) {
         artist* atst = JVEC_get(artists, i);
@@ -292,7 +295,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
 void print_song(song* sng);
 
 int load_songs(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->songs;
+    JVEC* vec = mem->vecs[2];
 
     JHASHMAP* album_cache = mem->album_cache;
 
@@ -379,7 +382,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
     JVEC_sort(vec);
 
     // sort the songs within each album
-    JVEC* albums = mem->albums;
+    JVEC* albums = mem->vecs[1];
     size_t len = JVEC_len(albums);
     for (size_t i = 0; i < len; i++) {
         album* abm = JVEC_get(albums, i);
@@ -413,7 +416,7 @@ int load_library(lib_mem* mem, lib_db* db) {
 }
 
 void debug_print_mem(lib_mem* mem) {
-    JVEC* artists = mem->artists;
+    JVEC* artists = mem->vecs[0];
     //JVEC* albums = mem->albums;
     //JVEC* songs = mem->songs;
 
