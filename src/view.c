@@ -32,12 +32,16 @@ char* album_string(void* abm) {
         return NULL;
     }
     
-    album* _abm = (album*) abm
+    album* _abm = (album*) abm;
+    return NULL;
 }
 
-void menu_list(WINDOW* w, JVEC* vec, size_t top, size_t selected, size_t wdt, size_t hgt) {
+void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, size_t wdt) {
     werase(w);
     box(w, 0, 0);
+
+    size_t top = imod->row_top[col_idx];
+    size_t selected = imod->row_idx[col_idx];
     for (size_t i = 0; i < hgt; i++) {
 
         // if currently selected, invert colors of string
@@ -74,47 +78,36 @@ WINDOW* view_new() {
     return newwin(S_HEIGHT, S_WIDTH, 0, 0);
 }
 
-static inline void scroll_artist(imodel* im, int8_t dir) {
-    JVEC* ats = im->lib->artists;
+static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows) {
+    int8_t vec_num = im->col_idx;
+
+    JVEC* vec = lib->vecs[vec_num];
 
     // don't allow user to scroll out of bounds 
-    if (dir == -1 && im->artist_idx == 0) {
+    if (dir == -1 && im->row_idx[vec_num] == 0) {
         return;
     }
-    if (dir == 1 && im->artist_idx == ats->len - 1) {
+    if (dir == 1 && im->row_idx[vec_num] == vec->len - 1) {
         return;
     }
 
-    im->artist_idx += dir;
+    // update current column's row index to reflect user input
+    im->row_idx[vec_num] += dir;
+
+    // recompute top of currently visible list in window
+    size_t idx = im->row_idx[vec_num];
+    size_t top = im->row_top[vec_num];
+
+    if (idx - top > rows) {
+        im->row_top[vec_num] = idx - top;
+    }
+
+    if (idx < top) {
+        im->row_top[vec_num] = idx;
+    }
+
 }
 
-static inline void scroll_album(imodel* im, int8_t dir) {
-    JVEC* abms = im->lib->albums;
-
-    // don't allow user to scroll out of bounds 
-    if (dir == -1 && im->album_idx == 0) {
-        return;
-    }
-    if (dir == 1 && im->album_idx == abms->len - 1) {
-        return;
-    }
-
-    im->album_idx += dir;
-}
-
-static inline void scroll_song(imodel* im, int8_t dir) {
-    JVEC* sngs = im->lib->songs;
-
-    // don't allow user to scroll out of bounds 
-    if (dir == -1 && im->song_idx == 0) {
-        return;
-    }
-    if (dir == 1 && im->song_idx == sngs->len - 1) {
-        return;
-    }
-
-    im->song_idx += dir;
-}
 
 static inline void change_column(imodel* im, int8_t dir) {
     // don't let user scroll out of bounds
@@ -128,9 +121,9 @@ void view_loop(lib_mem* lib) {
     int rows, cols;
     int menu_wdt, menu_hgt;
 
-    JVEC* atsts = lib->artists;
-    JVEC* abms = lib->albums;
-    JVEC* sngs = lib->songs;
+    JVEC* atsts = lib->vecs[0];
+    JVEC* abms = lib->vecs[1];
+    JVEC* sngs = lib->vecs[2];
     
     WINDOW *atst_menu, *abm_menu, *sng_menu;
     
@@ -142,7 +135,8 @@ void view_loop(lib_mem* lib) {
     imodel* imod = imodel_new();
 
     int ch;
-    for(;;) {
+    uint8_t exit_flag = 0;
+    while (exit_flag) {
         // dynamically resize all windows accounting for current screen size
         getmaxyx(stdscr, rows, cols);
         menu_wdt = cols/3;
@@ -152,9 +146,11 @@ void view_loop(lib_mem* lib) {
         wresize(sng_menu, rows, cols);
 
         // render all windows
-        menu_list(atst_menu, atsts, imod->row_top[0], imod->row_idx[0], rows, cols);
-        menu_list(abm_menu, abms, imod->row_top[1], imod->row_idx[1], rows, cols);
-        menu_list(sng_menu, sngs, imod->row_top[2], imod->row_idx[2], rows, cols);
+
+        //display menus
+        menu_list(atst_menu, atsts, imod, 0, rows, cols);
+        menu_list(abm_menu, abms, imod, 1, rows, cols);
+        menu_list(sng_menu, sngs, imod, 2, rows, cols);
 
         // get input
         ch = getch();
@@ -163,26 +159,30 @@ void view_loop(lib_mem* lib) {
             //scroll current win down
             case 'k':
             case 'K':
-                scroll_menu(imod, 1);
+                scroll_menu(imod, lib, 1, rows);
                 break;
             //scroll current win up
             case 'j':
             case 'J':
-                scroll_menu(imod, -1);
+                scroll_menu(imod, lib, -1, rows);
                 break;
             //move to prev column
             case 'h':
             case 'H':
                 change_column(imod, -1);
                 break;
-            ///move to next column
+            // move to next column
             case 'l':
             case 'L':
                 change_column(imod, 1);
                 break;
+
+            // exit program
+            case 'q':
+            case 'Q':
+                exit_flag = 1;
+                break;
         }
 
-
-        
     }
 }
