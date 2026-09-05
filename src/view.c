@@ -124,6 +124,9 @@ void view_loop(lib_mem* lib) {
     JVEC* atsts = lib->vecs[0];
     JVEC* abms = lib->vecs[1];
     JVEC* sngs = lib->vecs[2];
+
+    initscr();
+    keypad(stdscr, TRUE);
     
     WINDOW *atst_menu, *abm_menu, *sng_menu;
     
@@ -136,7 +139,7 @@ void view_loop(lib_mem* lib) {
 
     int ch;
     uint8_t exit_flag = 0;
-    while (exit_flag) {
+    while (!exit_flag) {
         // dynamically resize all windows accounting for current screen size
         getmaxyx(stdscr, rows, cols);
         menu_wdt = cols/3;
@@ -151,9 +154,13 @@ void view_loop(lib_mem* lib) {
         menu_list(atst_menu, atsts, imod, 0, rows, cols);
         menu_list(abm_menu, abms, imod, 1, rows, cols);
         menu_list(sng_menu, sngs, imod, 2, rows, cols);
-
+        wnoutrefresh(atst_menu);
+        wnoutrefresh(abm_menu);
+        wnoutrefresh(sng_menu);
+        wnoutrefresh(stdscr);
+        doupdate();
         // get input
-        ch = getch();
+        //ch = getch();
 
         switch(ch) {
             //scroll current win down

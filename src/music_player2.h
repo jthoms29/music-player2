@@ -73,10 +73,7 @@ typedef struct artist {
 } artist;
 
 typedef struct lib_mem {
-    // each letter will hold a vector of artists
-    JVEC* artists;
-    JVEC* albums;
-    JVEC* songs;
+    JVEC* vecs[3];
 
     // allows structs to be nested efficiently when loading library. Key is sql primary key, vals are 
     // the wanted parent structs
@@ -249,5 +246,8 @@ void debug_print_mem(lib_mem* mem);
 
 int load_library(lib_mem* mem, lib_db* db);
 void lib_mem_free(lib_mem** lib_ptr);
+
+
+void view_loop(lib_mem* lib);
 #endif
 

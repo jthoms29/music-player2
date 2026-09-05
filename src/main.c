@@ -11,8 +11,10 @@ int main(int argc, char** argv) {
     scan_dir(lib_db, argv[1]);
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
+        printf("failed\n");
         return 1;
     }
-    debug_print_mem(mem);
+    //debug_print_mem(mem);
+    view_loop(mem);
     lib_mem_free(&mem);
 }
