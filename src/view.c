@@ -53,29 +53,41 @@ char* song_string(void* sng) {
 
 void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*)) {
     werase(w);
-    box(w, 0, 0);
+    if (imod->col_idx == col_idx) {
+        wattron(w, COLOR_PAIR(2));
+        box(w, 0, 0);
+        wattroff(w, COLOR_PAIR(2));
+    }
+    else {
+        box(w, 0, 0);
+    }
 
     size_t top = imod->row_top[col_idx];
     size_t selected = imod->row_idx[col_idx];
     char* str;
-    for (size_t i = 0; i < hgt; i++) {
+    for (size_t i = 0; i < hgt-2; i++) {
     
         str = str_func(JVEC_get(vec, top+i));
         // if currently selected, invert colors of string
-        if (top+i == selected) {
+        if (top+i == selected && imod->col_idx == col_idx) {
+            wattron(w, COLOR_PAIR(3));
+            mvwaddnstr(w, i+1, 1, str, wdt);
+            wattroff(w, COLOR_PAIR(3));
+        }
+        else if (top+i == selected) {
             wattron(w, COLOR_PAIR(1));
-            mvwaddnstr(w, i, 0, str, wdt);
+            mvwaddnstr(w, i+1, 1, str, wdt);
             wattroff(w, COLOR_PAIR(1));
         }
         else {
-            mvwaddnstr(w,i, 0, str, wdt);
+            mvwaddnstr(w, i+1, 1, str, wdt);
         }
     }
 }
 
 
 
-void* ncurses_init() {
+void ncurses_init() {
     // ncurses init
     initscr();
 
@@ -92,7 +104,8 @@ void* ncurses_init() {
     start_color();
     use_default_colors();
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
-
+    init_pair(2, COLOR_YELLOW, -1);
+    init_pair(3, COLOR_BLACK, COLOR_YELLOW);
 }
 
 static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows) {
@@ -115,8 +128,8 @@ static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows
     size_t idx = im->row_idx[vec_num];
     size_t top = im->row_top[vec_num];
 
-    if (idx - top > rows) {
-        im->row_top[vec_num] = idx - top;
+    if (idx - top >= rows-2) {
+        im->row_top[vec_num] = idx - (rows-2) + 1;
     }
 
     if (idx < top) {
@@ -184,13 +197,13 @@ void view_loop(lib_mem* lib) {
 
         switch(ch) {
             //scroll current win down
-            case 'k':
-            case 'K':
+            case 'j':
+            case 'J':
                 scroll_menu(imod, lib, 1, rows);
                 break;
             //scroll current win up
-            case 'j':
-            case 'J':
+            case 'k':
+            case 'K':
                 scroll_menu(imod, lib, -1, rows);
                 break;
             //move to prev column
