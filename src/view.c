@@ -27,38 +27,55 @@ imodel* imodel_new() {
     return im;
 }
 
+char* artist_string(void* atst) {
+    if (!atst) {
+        return NULL;
+    }
+    artist* _atst = (artist*) atst;
+    return _atst->name;
+}
+
 char* album_string(void* abm) {
     if (!abm) {
         return NULL;
     }
-    
     album* _abm = (album*) abm;
-    return NULL;
+    return _abm->title;
 }
 
-void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, size_t wdt) {
+char* song_string(void* sng) {
+    if (!sng) {
+        return NULL;
+    }
+    song* _sng = (song*) sng;
+    return _sng->title;
+}
+
+void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*)) {
     werase(w);
     box(w, 0, 0);
 
     size_t top = imod->row_top[col_idx];
     size_t selected = imod->row_idx[col_idx];
+    char* str;
     for (size_t i = 0; i < hgt; i++) {
-
+    
+        str = str_func(JVEC_get(vec, top+i));
         // if currently selected, invert colors of string
-        if (i == selected) {
-            for (size_t j = 0; j < wdt; j++) {
-                wattron(w, COLOR_PAIR(1));
-                mvwaddnstr(w, i, 0, ((song*)JVEC_get(vec, i))->title, wdt);
-                wattroff(w, COLOR_PAIR(1));
-            }
+        if (top+i == selected) {
+            wattron(w, COLOR_PAIR(1));
+            mvwaddnstr(w, i, 0, str, wdt);
+            wattroff(w, COLOR_PAIR(1));
         }
-        mvwaddnstr(w,i, 0, ((song*)JVEC_get(vec, i))->title, wdt);
+        else {
+            mvwaddnstr(w,i, 0, str, wdt);
+        }
     }
 }
 
 
 
-WINDOW* view_new() {
+void* ncurses_init() {
     // ncurses init
     initscr();
 
@@ -67,6 +84,7 @@ WINDOW* view_new() {
     mouseinterval(0);
     keypad(stdscr, TRUE);
 
+    curs_set(0);
     // don't block on getch();
     timeout(0);
 
@@ -75,7 +93,6 @@ WINDOW* view_new() {
     use_default_colors();
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
 
-    return newwin(S_HEIGHT, S_WIDTH, 0, 0);
 }
 
 static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows) {
@@ -119,48 +136,51 @@ static inline void change_column(imodel* im, int8_t dir) {
 
 void view_loop(lib_mem* lib) {
     int rows, cols;
-    int menu_wdt, menu_hgt;
+    int menu_wdt = 0, menu_hgt = 0;
 
     JVEC* atsts = lib->vecs[0];
     JVEC* abms = lib->vecs[1];
     JVEC* sngs = lib->vecs[2];
 
-    initscr();
-    keypad(stdscr, TRUE);
-    
+    ncurses_init();
+
     WINDOW *atst_menu, *abm_menu, *sng_menu;
     
     atst_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
-    abm_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
-    sng_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
+    abm_menu = newwin(S_HEIGHT, S_WIDTH, 0, menu_wdt);
+    sng_menu = newwin(S_HEIGHT, S_WIDTH, 0, menu_wdt*2);
 
     // init imodel
     imodel* imod = imodel_new();
 
     int ch;
     uint8_t exit_flag = 0;
+    
     while (!exit_flag) {
         // dynamically resize all windows accounting for current screen size
         getmaxyx(stdscr, rows, cols);
         menu_wdt = cols/3;
         menu_hgt = rows; //placeholder
-        wresize(atst_menu, rows, cols);
-        wresize(abm_menu, rows, cols);
-        wresize(sng_menu, rows, cols);
+        wresize(atst_menu, menu_hgt, menu_wdt);
+        mvwin(atst_menu, 0, 0);
+        wresize(abm_menu, menu_hgt, menu_wdt);
+        mvwin(abm_menu, 0, menu_wdt);
+        wresize(sng_menu, menu_hgt, menu_wdt);
+        mvwin(sng_menu, 0, menu_wdt*2);
 
         // render all windows
 
         //display menus
-        menu_list(atst_menu, atsts, imod, 0, rows, cols);
-        menu_list(abm_menu, abms, imod, 1, rows, cols);
-        menu_list(sng_menu, sngs, imod, 2, rows, cols);
+        menu_list(atst_menu, atsts, imod, 0, rows, cols, artist_string);
+        menu_list(abm_menu, abms, imod, 1, rows, cols, album_string);
+        menu_list(sng_menu, sngs, imod, 2, rows, cols, song_string);
         wnoutrefresh(atst_menu);
         wnoutrefresh(abm_menu);
         wnoutrefresh(sng_menu);
         wnoutrefresh(stdscr);
         doupdate();
         // get input
-        //ch = getch();
+        ch = getch();
 
         switch(ch) {
             //scroll current win down
