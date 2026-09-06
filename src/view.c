@@ -9,22 +9,22 @@
 
 typedef struct imodel {
     uint8_t col_idx;
-
     size_t row_top[3];
     size_t row_idx[3];
-
-
-
+    JVEC* vecs[3];
 } imodel;
 
-imodel* imodel_new() {
+
+imodel* imodel_new(lib_mem* lib) {
     imodel* im = calloc(1, sizeof(*im));
     if (!im) {
         perror("imodel_new(): could not allocate new imodel");
         return NULL;
     }
 
-
+    im->vecs[0] = lib->vecs[0];
+    im->vecs[1] = lib->vecs[1];
+    im->vecs[2] = lib->vecs[2];
     return im;
 }
 
@@ -119,7 +119,7 @@ void ncurses_init() {
 static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows) {
     int8_t vec_num = im->col_idx;
 
-    JVEC* vec = lib->vecs[vec_num];
+    JVEC* vec = im->vecs[vec_num];
 
     // don't allow user to scroll out of bounds 
     if (dir == -1 && im->row_idx[vec_num] == 0) {
@@ -144,6 +144,20 @@ static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows
         im->row_top[vec_num] = idx;
     }
 
+    if (vec_num == 0) {
+        im->vecs[1] =  ((artist*) JVEC_get(lib->vecs[0], idx))->albums;
+        im->vecs[2] = ((album*) JVEC_get(im->vecs[1], 0))->songs;
+        im->row_idx[1] = 0;
+        im->row_idx[2] = 0;
+        im->row_top[1] = 0;
+        im->row_top[2] = 0;
+    }
+    if (vec_num == 1) {
+        im->vecs[2] = ((album*) JVEC_get(lib->vecs[1], idx))->songs;
+        im->row_idx[2] = 0;
+        im->row_top[2] = 0;
+    }
+
 }
 
 
@@ -159,10 +173,6 @@ void view_loop(lib_mem* lib) {
     int rows, cols;
     int menu_wdt = 0, menu_hgt = 0;
 
-    JVEC* atsts = lib->vecs[0];
-    JVEC* abms = lib->vecs[1];
-    JVEC* sngs = lib->vecs[2];
-
     ncurses_init();
 
     WINDOW *atst_menu, *abm_menu, *sng_menu, *playback_win;
@@ -173,7 +183,7 @@ void view_loop(lib_mem* lib) {
     playback_win = newwin(0, 0, 0, 0);
 
     // init imodel
-    imodel* imod = imodel_new();
+    imodel* imod = imodel_new(lib);
 
     int ch;
     uint8_t exit_flag = 0;
@@ -216,9 +226,9 @@ void view_loop(lib_mem* lib) {
             resize = 0;
         }
         //display menus
-        menu_list(atst_menu, atsts, imod, 0, menu_hgt, menu_wdt, artist_string);
-        menu_list(abm_menu, abms, imod, 1, menu_hgt, menu_wdt, album_string);
-        menu_list(sng_menu, sngs, imod, 2, menu_hgt, menu_wdt, song_string);
+        menu_list(atst_menu, imod->vecs[0], imod, 0, menu_hgt, menu_wdt, artist_string);
+        menu_list(abm_menu, imod->vecs[1], imod, 1, menu_hgt, menu_wdt, album_string);
+        menu_list(sng_menu, imod->vecs[2], imod, 2, menu_hgt, menu_wdt, song_string);
         playback_menu(playback_win, 6, menu_wdt*3);
         wnoutrefresh(stdscr);
         wnoutrefresh(atst_menu);

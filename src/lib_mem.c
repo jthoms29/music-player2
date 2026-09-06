@@ -169,6 +169,7 @@ int load_artists(lib_mem* mem, lib_db* db) {
 
     // put all artists in alphabetical order
     JVEC_sort(vec);
+
     return 0;
 
     uh_oh:
@@ -395,6 +396,22 @@ int load_songs(lib_mem* mem, lib_db* db) {
     // free song which caused failure
     free_song(sng);
     return 1;
+}
+
+int link_columns(lib_mem* mem) {
+    // now create a special entry which represents all artists
+    artist* atst = calloc(1, sizeof(*atst));
+    if (!atst) {
+        perror("load_artists(): failed to allocate space for all artists entry");
+    }
+    char* name = "!All Artists";
+    char* name_alloc = malloc(strlen(name)+1);
+    if (!name_alloc) {
+        perror("load_artists(): failed to allocate space for artist name");
+    }
+    strcpy(name_alloc, name);
+    atst->name = name_alloc;
+    // add this to the front of the artists vector
 }
 
 // load persistent library stored in sql database into memory
