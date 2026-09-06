@@ -1,9 +1,10 @@
 #include <music_player2.h>
 #include <ncurses.h>
+#include <assert.h>
 
-#define S_HEIGHT 30
-#define S_WIDTH 10
 
+#define MIN_ROWS 9
+#define MIN_COLS 15
 #define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
 
 typedef struct imodel {
@@ -62,9 +63,12 @@ void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, s
         box(w, 0, 0);
     }
 
+
     size_t top = imod->row_top[col_idx];
     size_t selected = imod->row_idx[col_idx];
     char* str;
+
+    assert(hgt >= 3);
     for (size_t i = 0; i < hgt-2; i++) {
     
         str = str_func(JVEC_get(vec, top+i));
@@ -85,6 +89,10 @@ void menu_list(WINDOW* w, JVEC* vec, imodel* imod, int8_t col_idx, size_t hgt, s
     }
 }
 
+void playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
+    werase(w);
+    box(w, 0, 0);
+}
 
 
 void ncurses_init() {
@@ -97,8 +105,8 @@ void ncurses_init() {
     keypad(stdscr, TRUE);
 
     curs_set(0);
-    // don't block on getch();
-    timeout(0);
+    // block on getch();
+    timeout(-1);
 
     // make it so black squares can be drawn to screen
     start_color();
@@ -157,54 +165,85 @@ void view_loop(lib_mem* lib) {
 
     ncurses_init();
 
-    WINDOW *atst_menu, *abm_menu, *sng_menu;
+    WINDOW *atst_menu, *abm_menu, *sng_menu, *playback_win;
     
-    atst_menu = newwin(S_HEIGHT, S_WIDTH, 0, 0);
-    abm_menu = newwin(S_HEIGHT, S_WIDTH, 0, menu_wdt);
-    sng_menu = newwin(S_HEIGHT, S_WIDTH, 0, menu_wdt*2);
+    atst_menu = newwin(0, 0, 0, 0);
+    abm_menu = newwin(0, 0, 0, 0);
+    sng_menu = newwin(0, 0, 0, 0);
+    playback_win = newwin(0, 0, 0, 0);
 
     // init imodel
     imodel* imod = imodel_new();
 
     int ch;
     uint8_t exit_flag = 0;
+
+    // flag to resize windows
+    uint8_t resize = 1;
     
     while (!exit_flag) {
-        // dynamically resize all windows accounting for current screen size
         getmaxyx(stdscr, rows, cols);
-        menu_wdt = cols/3;
-        menu_hgt = rows; //placeholder
-        wresize(atst_menu, menu_hgt, menu_wdt);
-        mvwin(atst_menu, 0, 0);
-        wresize(abm_menu, menu_hgt, menu_wdt);
-        mvwin(abm_menu, 0, menu_wdt);
-        wresize(sng_menu, menu_hgt, menu_wdt);
-        mvwin(sng_menu, 0, menu_wdt*2);
+        if (rows < MIN_ROWS || cols < MIN_COLS) {
+            // Terminal is too small to draw the UI.
+            werase(stdscr);
+            mvwprintw(stdscr, 0, 0, "Terminal too small. Please resize");
+            wrefresh(stdscr);
 
-        // render all windows
+            // Still read input so KEY_RESIZE can be received.
+            ch = getch();
 
+            if (ch == 'q' || ch == 'Q') {
+                exit_flag = 1;
+            }
+            continue;
+        }
+
+
+        if (resize) {
+        // dynamically resize all windows accounting for current screen size
+            menu_wdt = cols/3;
+            menu_hgt = rows - 6;
+            wresize(atst_menu, menu_hgt, menu_wdt);
+            mvwin(atst_menu, 0, 0);
+            wresize(abm_menu, menu_hgt, menu_wdt);
+            mvwin(abm_menu, 0, menu_wdt);
+            wresize(sng_menu, menu_hgt, menu_wdt);
+            mvwin(sng_menu, 0, menu_wdt*2);
+            wresize(playback_win, 6, menu_wdt*3);
+            mvwin(playback_win, menu_hgt, 0);
+
+
+            resize = 0;
+        }
         //display menus
-        menu_list(atst_menu, atsts, imod, 0, rows, cols, artist_string);
-        menu_list(abm_menu, abms, imod, 1, rows, cols, album_string);
-        menu_list(sng_menu, sngs, imod, 2, rows, cols, song_string);
+        menu_list(atst_menu, atsts, imod, 0, menu_hgt, menu_wdt, artist_string);
+        menu_list(abm_menu, abms, imod, 1, menu_hgt, menu_wdt, album_string);
+        menu_list(sng_menu, sngs, imod, 2, menu_hgt, menu_wdt, song_string);
+        playback_menu(playback_win, 6, menu_wdt*3);
+        wnoutrefresh(stdscr);
         wnoutrefresh(atst_menu);
         wnoutrefresh(abm_menu);
         wnoutrefresh(sng_menu);
-        wnoutrefresh(stdscr);
+        wnoutrefresh(playback_win);
         doupdate();
         // get input
         ch = getch();
 
         switch(ch) {
+            case KEY_RESIZE:
+                // restart loop to redraw windows. Screen has been resized
+                resize = 1;
+                break;
+
             //scroll current win down
             case 'j':
             case 'J':
-                scroll_menu(imod, lib, 1, rows);
+                scroll_menu(imod, lib, 1, menu_hgt);
                 break;
             //scroll current win up
             case 'k':
             case 'K':
-                scroll_menu(imod, lib, -1, rows);
+                scroll_menu(imod, lib, -1, menu_hgt);
                 break;
             //move to prev column
             case 'h':
@@ -222,7 +261,9 @@ void view_loop(lib_mem* lib) {
             case 'Q':
                 exit_flag = 1;
                 break;
+            
         }
 
     }
+    endwin();
 }
