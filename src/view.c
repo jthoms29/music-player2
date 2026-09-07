@@ -153,7 +153,7 @@ static inline void scroll_menu(imodel* im, lib_mem* lib, int8_t dir, size_t rows
         im->row_top[2] = 0;
     }
     if (vec_num == 1) {
-        im->vecs[2] = ((album*) JVEC_get(lib->vecs[1], idx))->songs;
+        im->vecs[2] = ((album*) JVEC_get(im->vecs[1], idx))->songs;
         im->row_idx[2] = 0;
         im->row_top[2] = 0;
     }
