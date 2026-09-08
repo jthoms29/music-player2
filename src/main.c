@@ -5,57 +5,42 @@
 
 void main_loop(lib_mem* lib) {
     int rows, cols;
-    int menu_wdt = 0, menu_hgt = 0;
+    size_t menu_wdt = 0, menu_hgt = 0;
 
-    view_init();
+    view* v = view_new();
 
-    WINDOW *atst_menu, *abm_menu, *sng_menu, *playback_win;
-    
-    atst_menu = newwin(0, 0, 0, 0);
-    abm_menu = newwin(0, 0, 0, 0);
-    sng_menu = newwin(0, 0, 0, 0);
-    playback_win = newwin(0, 0, 0, 0);
-
-    // init mel
     model* m = model_new(lib);
+   
+    resize_elements(v);
 
     int ch;
     uint8_t exit_flag = 0;
 
     // flag to resize windows
-    uint8_t resize = 1;
+    int resize = 1;
+
+
 
     int draw_ret;
     while (!exit_flag) {
-
-        draw_ret = draw_screen(m, resize, atst_menu, abm_menu, sng_menu, playback_win);
-        // terminal window is currently too small
-        if (draw_ret == -1) {
-            // Still read input so KEY_RESIZE can be received.
-            ch = getch();
-
-            if (ch == 'q' || ch == 'Q') {
-                exit_flag = 1;
-            }
-            continue;
-        }
+        draw_ret = draw_screen(v, m);
         // get input
         ch = getch();
         switch(ch) {
             case KEY_RESIZE:
                 // restart loop to redraw windows. Screen has been resized
-                resize = 1;
+                resize_elements(v);
                 break;
 
             //scroll current win down
             case 'j':
             case 'J':
-                scroll_menu(m, lib, 1, menu_hgt);
+                scroll_menu(m, lib, 1, v->selection_hgt);
                 break;
             //scroll current win up
             case 'k':
             case 'K':
-                scroll_menu(m, lib, -1, menu_hgt);
+                scroll_menu(m, lib, -1, v->selection_hgt);
                 break;
             //move to prev column
             case 'h':
@@ -75,8 +60,6 @@ void main_loop(lib_mem* lib) {
                 break;
             
         }
-        resize = 0;
-
     }
     endwin();
 }
