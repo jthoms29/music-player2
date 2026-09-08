@@ -53,14 +53,14 @@ void lib_mem_free(lib_mem** lib_ptr) {
         return;
     }
 
-    if ((*lib_ptr)->vecs[0]) {
-        JVEC_free(&(*lib_ptr)->vecs[0]); // :-)
+    if ((*lib_ptr)->artists) {
+        JVEC_free(&(*lib_ptr)->artists); // :-)
     }
-    if ((*lib_ptr)->vecs[1]) {
-        JVEC_free(&(*lib_ptr)->vecs[1]); 
+    if ((*lib_ptr)->albums) {
+        JVEC_free(&(*lib_ptr)->albums); 
     }
-    if ((*lib_ptr)->vecs[2]) {
-        JVEC_free(&(*lib_ptr)->vecs[2]); 
+    if ((*lib_ptr)->songs) {
+        JVEC_free(&(*lib_ptr)->songs); 
     }
     free(*lib_ptr);
     *lib_ptr = NULL;
@@ -75,22 +75,22 @@ lib_mem* lib_mem_new(void) {
     }
 
     // artists vec
-    lib->vecs[0] = JVEC_new(NULL, artist_compare);
-    if (!lib->vecs[0]) {
+    lib->artists = JVEC_new(NULL, artist_compare);
+    if (!lib->artists) {
         fprintf(stderr, "Failed to create artists vector\n");
         goto uh_oh;
     }
 
     // albums vec
-    lib->vecs[1] = JVEC_new(NULL, album_compare);
-    if (!lib->vecs[1]) {
+    lib->albums = JVEC_new(NULL, album_compare);
+    if (!lib->albums) {
         fprintf(stderr, "Failed to create albums vector\n");
         goto uh_oh;
     }
 
     // songs vec
-    lib->vecs[2] = JVEC_new(NULL, song_compare);
-    if (!lib->vecs[2]) {
+    lib->songs = JVEC_new(NULL, song_compare);
+    if (!lib->songs) {
         fprintf(stderr, "Failed to create songs vector\n");
         goto uh_oh;
     }
@@ -116,7 +116,7 @@ lib_mem* lib_mem_new(void) {
 }
 
 int load_artists(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->vecs[0];
+    JVEC* vec = mem->artists;
     JHASHMAP* cache = mem->artist_cache;
 
     sqlite3_stmt* pstmt;
@@ -180,7 +180,7 @@ int load_artists(lib_mem* mem, lib_db* db) {
 
 void print_album(album* abm);
 int load_albums(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->vecs[1];
+    JVEC* vec = mem->albums;
 
     JHASHMAP* artist_cache = mem->artist_cache;
     JHASHMAP* album_cache = mem->album_cache;
@@ -274,11 +274,10 @@ int load_albums(lib_mem* mem, lib_db* db) {
    
     
     // sort full album vector
-    printf("%ld vec len\n", vec->len);
     JVEC_sort(vec);
 
     // now within each artist the albums must be sorted
-    JVEC* artists = mem->vecs[0];
+    JVEC* artists = mem->artists;
     size_t len = JVEC_len(artists);
     for (size_t i = 0; i < len; i++) {
         artist* atst = JVEC_get(artists, i);
@@ -296,7 +295,7 @@ int load_albums(lib_mem* mem, lib_db* db) {
 void print_song(song* sng);
 
 int load_songs(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->vecs[2];
+    JVEC* vec = mem->songs;
 
     JHASHMAP* album_cache = mem->album_cache;
 
@@ -372,7 +371,6 @@ int load_songs(lib_mem* mem, lib_db* db) {
         sng->date =  abm->date;
         sng->orig_date = abm->date;
 
-        print_song(sng);
         // add to general songs vector
         JVEC_append(vec, sng);
         // add to album's songs vector
@@ -383,7 +381,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
     JVEC_sort(vec);
 
     // sort the songs within each album
-    JVEC* albums = mem->vecs[1];
+    JVEC* albums = mem->albums;
     size_t len = JVEC_len(albums);
     for (size_t i = 0; i < len; i++) {
         album* abm = JVEC_get(albums, i);
@@ -398,21 +396,6 @@ int load_songs(lib_mem* mem, lib_db* db) {
     return 1;
 }
 
-int link_columns(lib_mem* mem) {
-    // now create a special entry which represents all artists
-    artist* atst = calloc(1, sizeof(*atst));
-    if (!atst) {
-        perror("load_artists(): failed to allocate space for all artists entry");
-    }
-    char* name = "!All Artists";
-    char* name_alloc = malloc(strlen(name)+1);
-    if (!name_alloc) {
-        perror("load_artists(): failed to allocate space for artist name");
-    }
-    strcpy(name_alloc, name);
-    atst->name = name_alloc;
-    // add this to the front of the artists vector
-}
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
@@ -433,7 +416,7 @@ int load_library(lib_mem* mem, lib_db* db) {
 }
 
 void debug_print_mem(lib_mem* mem) {
-    JVEC* artists = mem->vecs[0];
+    JVEC* artists = mem->artists;
     //JVEC* albums = mem->albums;
     //JVEC* songs = mem->songs;
 

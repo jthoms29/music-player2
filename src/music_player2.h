@@ -3,11 +3,14 @@
 
 #include <stdint.h>
 #include <sqlite3.h>
+#include <ncurses.h>
 #include <../../JLib/src/JHELPER.h>
 #include <../../JLib/src/JHASHMAP.h>
 #include <../../JLib/src/JVEC.h>
 #include <../../JLib/src/JARENA.h>
 
+#define MIN_ROWS 9
+#define MIN_COLS 15
 /* 
  * Contains a pointer to the sqlite database which contains the user's music library info,
  * as well as premade statements for interacting with the db.
@@ -73,7 +76,9 @@ typedef struct artist {
 } artist;
 
 typedef struct lib_mem {
-    JVEC* vecs[3];
+    JVEC* artists;
+    JVEC* albums;
+    JVEC* songs;
 
     // allows structs to be nested efficiently when loading library. Key is sql primary key, vals are 
     // the wanted parent structs
@@ -82,6 +87,16 @@ typedef struct lib_mem {
 
 } lib_mem;
 
+typedef struct model {
+    // current column the user is in (artist, album, song)
+    uint8_t col_idx;
+    // the topmost viewable element in each column
+    size_t row_top[3];
+    // the current selected element in each column
+    size_t row_idx[3];
+    // the current vector being visualized by each column
+    JVEC* vecs[3];
+} model;
 
 /* DIRECTORY SCAN FUCNTIONS (scan.c) $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
@@ -247,7 +262,22 @@ void debug_print_mem(lib_mem* mem);
 int load_library(lib_mem* mem, lib_db* db);
 void lib_mem_free(lib_mem** lib_ptr);
 
+/* model func*/
 
-void view_loop(lib_mem* lib);
+model* model_new(lib_mem* lib);
+
+/* VIEW FUNCTIONS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
+
+void view_init();
+
+void draw_selection_menu(WINDOW* w, model* mod, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*));
+
+
+int draw_screen(model* m, int resize, WINDOW* atst_menu, WINDOW* abm_menu, WINDOW* sng_menu, WINDOW* playback_win);
+void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt);
+
+void main_loop(lib_mem* lib);
+void scroll_menu(model* m, lib_mem* lib, int8_t dir, size_t rows);
+void change_column(model* m, int8_t dir);
 #endif
 
