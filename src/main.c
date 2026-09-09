@@ -28,19 +28,19 @@ void main_loop(lib_mem* lib) {
         ch = getch();
         switch(ch) {
             case KEY_RESIZE:
-                // restart loop to redraw windows. Screen has been resized
+                // Screen has been resized, redraw windows
                 resize_elements(v);
                 break;
 
             //scroll current win down
             case 'j':
             case 'J':
-                scroll_menu(m, lib, 1, v->selection_hgt);
+                scroll_menu(m, v, lib, 1);
                 break;
             //scroll current win up
             case 'k':
             case 'K':
-                scroll_menu(m, lib, -1, v->selection_hgt);
+                scroll_menu(m, v, lib, -1);
                 break;
             //move to prev column
             case 'h':

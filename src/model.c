@@ -14,11 +14,13 @@ model* model_new(lib_mem* lib) {
     return m;
 }
 
-void scroll_menu(model* m, lib_mem* lib, int8_t dir, size_t rows) {
+void scroll_menu(model* m, view* v, lib_mem* lib, int8_t dir) {
     int8_t vec_num = m->col_idx;
 
     JVEC* vec = m->vecs[vec_num];
 
+    int rows = v->selection_hgt;
+    
     // don't allow user to scroll out of bounds 
     if (dir == -1 && m->row_idx[vec_num] == 0) {
         return;
@@ -32,14 +34,14 @@ void scroll_menu(model* m, lib_mem* lib, int8_t dir, size_t rows) {
 
     // recompute top of currently visible list in window
     size_t idx = m->row_idx[vec_num];
-    size_t top = m->row_top[vec_num];
+    size_t top = v->row_top[vec_num];
 
     if (idx - top >= rows-2) {
-        m->row_top[vec_num] = idx - (rows-2) + 1;
+        v->row_top[vec_num] = idx - (rows-2) + 1;
     }
 
     if (idx < top) {
-        m->row_top[vec_num] = idx;
+        v->row_top[vec_num] = idx;
     }
 
     if (vec_num == 0) {
@@ -47,13 +49,13 @@ void scroll_menu(model* m, lib_mem* lib, int8_t dir, size_t rows) {
         m->vecs[2] = ((album*) JVEC_get(m->vecs[1], 0))->songs;
         m->row_idx[1] = 0;
         m->row_idx[2] = 0;
-        m->row_top[1] = 0;
-        m->row_top[2] = 0;
+        v->row_top[1] = 0;
+        v->row_top[2] = 0;
     }
     if (vec_num == 1) {
         m->vecs[2] = ((album*) JVEC_get(m->vecs[1], idx))->songs;
         m->row_idx[2] = 0;
-        m->row_top[2] = 0;
+        v->row_top[2] = 0;
     }
 
 }

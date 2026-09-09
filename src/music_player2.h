@@ -90,8 +90,6 @@ typedef struct lib_mem {
 typedef struct model {
     // current column the user is in (artist, album, song)
     uint8_t col_idx;
-    // the topmost viewable element in each column
-    size_t row_top[3];
     // the current selected element in each column
     size_t row_idx[3];
     // the current vector being visualized by each column
@@ -105,6 +103,8 @@ typedef struct view {
     int selection_wdt;
     int selection_hgt;
 
+    // the topmost viewable element in each column
+    size_t row_top[3];
     WINDOW* playback_win;
 } view;
 
@@ -281,13 +281,13 @@ model* model_new(lib_mem* lib);
 
 void view_init();
 
-void draw_selection_menu(WINDOW* w, model* mod, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*));
+void draw_selection_menu(WINDOW* w, model* mod, view* vw, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*));
 
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt);
 
 void main_loop(lib_mem* lib);
-void scroll_menu(model* m, lib_mem* lib, int8_t dir, size_t rows);
+void scroll_menu(model* m, view* v, lib_mem* lib, int8_t dir);
 void change_column(model* m, int8_t dir);
 
 

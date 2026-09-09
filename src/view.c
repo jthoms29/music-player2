@@ -32,7 +32,7 @@ char* song_string(void* sng) {
     return _sng->title;
 }
 
-void draw_selection_menu(WINDOW* w, model* mod, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*)) {
+void draw_selection_menu(WINDOW* w, model* mod, view* vw, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*)) {
     werase(w);
     if (mod->col_idx == col_idx) {
         wattron(w, COLOR_PAIR(2));
@@ -46,7 +46,7 @@ void draw_selection_menu(WINDOW* w, model* mod, int8_t col_idx, size_t hgt, size
     // vector for current window
     JVEC* vec = mod->vecs[col_idx];
 
-    size_t top = mod->row_top[col_idx];
+    size_t top = vw->row_top[col_idx];
     size_t selected = mod->row_idx[col_idx];
     char* str;
 
@@ -153,9 +153,9 @@ int draw_screen(view* v, model* m) {
     WINDOW* playback_win = v->playback_win;
     int sh = v->selection_hgt, sw = v->selection_wdt;
     // TODO!!! change
-    draw_selection_menu(atst_menu, m, 0, sh, sw, artist_string);
-    draw_selection_menu(abm_menu, m, 1, sh, sw, album_string);
-    draw_selection_menu(sng_menu, m, 2, sh, sw, song_string);
+    draw_selection_menu(atst_menu, m, v, 0, sh, sw, artist_string);
+    draw_selection_menu(abm_menu, m, v, 1, sh, sw, album_string);
+    draw_selection_menu(sng_menu, m, v, 2, sh, sw, song_string);
     draw_playback_menu(playback_win, 6, sw*3);
     wnoutrefresh(stdscr);
     wnoutrefresh(atst_menu);

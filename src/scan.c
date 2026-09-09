@@ -16,6 +16,7 @@ int read_tags(lib_db* lib_db, char* path) {
     const TagLib_AudioProperties *properties;
 
     if ( !(file = taglib_file_new(path)) || !(tag = taglib_file_tag(file)) ) {
+        printf("%s\n" ,path);
         return -1; 
     }
 
