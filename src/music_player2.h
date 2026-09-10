@@ -8,6 +8,7 @@
 #include <../../JLib/src/JHASHMAP.h>
 #include <../../JLib/src/JVEC.h>
 #include <../../JLib/src/JARENA.h>
+#include <scrolling_menu.h>
 
 #define MIN_ROWS 9
 #define MIN_COLS 15
@@ -87,26 +88,14 @@ typedef struct lib_mem {
 
 } lib_mem;
 
-typedef struct model {
-    // current column the user is in (artist, album, song)
-    uint8_t col_idx;
-    // the current selected element in each column
-    size_t row_idx[3];
-    // the current vector being visualized by each column
-    JVEC* vecs[3];
 
-} model;
-
-typedef struct view {
+typedef struct elements {
     // the three selection menu windows - artist/album/song
-    WINDOW* selection_menu[3];
-    int selection_wdt;
-    int selection_hgt;
-
-    // the topmost viewable element in each column
-    size_t row_top[3];
+    scrolling_menu** menus;
+    // currently selected window
+    size_t col_idx;
     WINDOW* playback_win;
-} view;
+} elements;
 
 
 /* DIRECTORY SCAN FUCNTIONS (scan.c) $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */

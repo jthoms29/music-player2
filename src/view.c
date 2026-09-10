@@ -1,4 +1,5 @@
 #include <music_player2.h>
+#include <scrolling_menu.h>
 #include <ncurses.h>
 #include <assert.h>
 
@@ -8,68 +9,7 @@
 
 
 
-char* artist_string(void* atst) {
-    if (!atst) {
-        return NULL;
-    }
-    artist* _atst = (artist*) atst;
-    return _atst->name;
-}
 
-char* album_string(void* abm) {
-    if (!abm) {
-        return NULL;
-    }
-    album* _abm = (album*) abm;
-    return _abm->title;
-}
-
-char* song_string(void* sng) {
-    if (!sng) {
-        return NULL;
-    }
-    song* _sng = (song*) sng;
-    return _sng->title;
-}
-
-void draw_selection_menu(WINDOW* w, model* mod, view* vw, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*)) {
-    werase(w);
-    if (mod->col_idx == col_idx) {
-        wattron(w, COLOR_PAIR(2));
-        box(w, 0, 0);
-        wattroff(w, COLOR_PAIR(2));
-    }
-    else {
-        box(w, 0, 0);
-    }
-
-    // vector for current window
-    JVEC* vec = mod->vecs[col_idx];
-
-    size_t top = vw->row_top[col_idx];
-    size_t selected = mod->row_idx[col_idx];
-    char* str;
-
-    assert(hgt >= 3);
-    for (size_t i = 0; i < hgt-2; i++) {
-    
-        str = str_func(JVEC_get(vec, top+i));
-        // if currently selected, invert colors of string
-        if (top+i == selected && mod->col_idx == col_idx) {
-            wattron(w, COLOR_PAIR(3));
-            mvwaddnstr(w, i+1, 1, str, wdt);
-            wattroff(w, COLOR_PAIR(3));
-        }
-        else if (top+i == selected) {
-            wattron(w, COLOR_PAIR(1));
-            mvwaddnstr(w, i+1, 1, str, wdt);
-            wattroff(w, COLOR_PAIR(1));
-        }
-        else {
-            mvwaddnstr(w, i+1, 1, str, wdt);
-        }
-    }
-}
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
     werase(w);
@@ -78,12 +18,10 @@ void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
 
 
 view* view_new() {
-
     view* v = calloc(1, sizeof(*v));
     if (!v) {
         perror("ougghhh");
     }
-
 
     // ncurses init
     initscr();

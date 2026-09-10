@@ -1,64 +1,43 @@
 #include <music_player2.h>
+#include <scrolling_menu.h>
 
+char* artist_string(void* atst) {
+    if (!atst) {
+        return NULL;
+    }
+    artist* _atst = (artist*) atst;
+    return _atst->name;
+}
 
-model* model_new(lib_mem* lib) {
-    model* m = calloc(1, sizeof(*m));
-    if (!m) {
-        perror("imodel_new(): could not allocate new imodel");
+char* album_string(void* abm) {
+    if (!abm) {
+        return NULL;
+    }
+    album* _abm = (album*) abm;
+    return _abm->title;
+}
+
+char* song_string(void* sng) {
+    if (!sng) {
+        return NULL;
+    }
+    song* _sng = (song*) sng;
+    return _sng->title;
+}
+
+elements* elements_new(lib_mem* lib) {
+    elements* e = calloc(1, sizeof(*e));
+    if (!e) {
+        perror("elements_new(): could not allocate new elements struct");
         return NULL;
     }
 
-    m->vecs[0] = lib->artists;
-    m->vecs[1] = lib->albums;
-    m->vecs[2] = lib->songs;
-    return m;
+    e->menu[0] = menu_new(lib->artists, artist_string);
+    e->menu[1] = menu_new(lib->albums, album_string);
+    e->menu[2] = menu_new(lib->songs, song_string);
+    return e;
 }
 
-void scroll_menu(model* m, view* v, lib_mem* lib, int8_t dir) {
-    int8_t vec_num = m->col_idx;
-
-    JVEC* vec = m->vecs[vec_num];
-
-    int rows = v->selection_hgt;
-    
-    // don't allow user to scroll out of bounds 
-    if (dir == -1 && m->row_idx[vec_num] == 0) {
-        return;
-    }
-    if (dir == 1 && m->row_idx[vec_num] == vec->len - 1) {
-        return;
-    }
-
-    // update current column's row index to reflect user input
-    m->row_idx[vec_num] += dir;
-
-    // recompute top of currently visible list in window
-    size_t idx = m->row_idx[vec_num];
-    size_t top = v->row_top[vec_num];
-
-    if (idx - top >= rows-2) {
-        v->row_top[vec_num] = idx - (rows-2) + 1;
-    }
-
-    if (idx < top) {
-        v->row_top[vec_num] = idx;
-    }
-
-    if (vec_num == 0) {
-        m->vecs[1] =  ((artist*) JVEC_get(lib->artists, idx))->albums;
-        m->vecs[2] = ((album*) JVEC_get(m->vecs[1], 0))->songs;
-        m->row_idx[1] = 0;
-        m->row_idx[2] = 0;
-        v->row_top[1] = 0;
-        v->row_top[2] = 0;
-    }
-    if (vec_num == 1) {
-        m->vecs[2] = ((album*) JVEC_get(m->vecs[1], idx))->songs;
-        m->row_idx[2] = 0;
-        v->row_top[2] = 0;
-    }
-
-}
 
 void change_column(model* m, int8_t dir) {
     // don't let user scroll out of bounds
