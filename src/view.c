@@ -17,11 +17,7 @@ void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
 }
 
 
-view* view_new() {
-    view* v = calloc(1, sizeof(*v));
-    if (!v) {
-        perror("ougghhh");
-    }
+void ncurses_init() {
 
     // ncurses init
     initscr();
@@ -42,37 +38,24 @@ view* view_new() {
     init_pair(2, COLOR_YELLOW, -1);
     init_pair(3, COLOR_BLACK, COLOR_YELLOW);
 
-    // initialize windows
-    // artist menu
-    v->selection_menu[0] = newwin(0, 0, 0, 0);
-    // album menu
-    v->selection_menu[1] = newwin(0, 0, 0, 0);
-    // songs menu
-    v->selection_menu[2] = newwin(0, 0, 0, 0);
-    v->playback_win = newwin(0, 0, 0, 0);
-    return v;
 }
 
-void resize_elements(view* v) {
+void resize_elements(elements* e) {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
     // update size vals
-    v->selection_wdt = cols/3;
-    v->selection_hgt = rows - 6;
+    size_t sw = cols/3;
+    size_t sh = rows - 6;
 
-    int sw = v->selection_wdt, sh = v->selection_hgt;
-    wresize(v->selection_menu[0], sh, sw);
-    mvwin(v->selection_menu[0], 0, 0);
-    wresize(v->selection_menu[1], sh, sw);
-    mvwin(v->selection_menu[1], 0, sw);
-    wresize(v->selection_menu[2], sh, sw);
-    mvwin(v->selection_menu[2], 0, sw*2);
-    wresize(v->playback_win, 6, sw*3);
-    mvwin(v->playback_win, sh, 0);
+    menu_resize(e->menus[0], sh, sw, 0, 0);
+    menu_resize(e->menus[1], sh, sw, 0, sw);
+    menu_resize(e->menus[2], sh, sw, 0, sw*2);
+    wresize(e->playback_win, 6, sw*3);
+    mvwin(e->playback_win, sh, 0);
 }
 
-int draw_screen(view* v, model* m) {
+int draw_screen(elements* e) {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
     
@@ -84,22 +67,15 @@ int draw_screen(view* v, model* m) {
         return -1;
     }
 
-
-    WINDOW* atst_menu = v->selection_menu[0];
-    WINDOW* abm_menu = v->selection_menu[1];
-    WINDOW* sng_menu = v->selection_menu[2];
-    WINDOW* playback_win = v->playback_win;
-    int sh = v->selection_hgt, sw = v->selection_wdt;
+    menu_draw(e->menus[0]);
+    menu_draw(e->menus[1]);
+    menu_draw(e->menus[2]);
     // TODO!!! change
-    draw_selection_menu(atst_menu, m, v, 0, sh, sw, artist_string);
-    draw_selection_menu(abm_menu, m, v, 1, sh, sw, album_string);
-    draw_selection_menu(sng_menu, m, v, 2, sh, sw, song_string);
-    draw_playback_menu(playback_win, 6, sw*3);
     wnoutrefresh(stdscr);
-    wnoutrefresh(atst_menu);
-    wnoutrefresh(abm_menu);
-    wnoutrefresh(sng_menu);
-    wnoutrefresh(playback_win);
+    wnoutrefresh(e->menus[0]->win);
+    wnoutrefresh(e->menus[1]->win);
+    wnoutrefresh(e->menus[2]->win);
     doupdate();
+    return 0;
 }
 

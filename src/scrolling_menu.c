@@ -7,6 +7,8 @@ scrolling_menu* menu_new(JVEC* vec, char* (*str_func)(void*)) {
         perror("menu_new(): failed to allocate new scrolling menu");
         return NULL;
     }
+    WINDOW* w = newwin(0, 0, 0, 0);
+    m->win = w;
 
     m->vec = vec;
     m->str_func = str_func;
@@ -45,7 +47,7 @@ void menu_draw(scrolling_menu* m) {
     werase(w);
 
     // if this menu is currently selected, draw with coloured border
-    if (m->selected) {
+    if (m->focused) {
         wattron(w, COLOR_PAIR(2));
         box(w, 0, 0);
         wattroff(w, COLOR_PAIR(2));
@@ -68,7 +70,7 @@ void menu_draw(scrolling_menu* m) {
     for (size_t i = 0; i < hgt-2; i++) {
         str = m->str_func(JVEC_get(vec, top+i));
         // if both element and window currently selected
-        if (top+i == idx && m->selected) {
+        if (top+i == idx && m->focused) {
             wattron(w, COLOR_PAIR(3));
             mvwaddnstr(w, i+1, 1, str, wdt-2);
             wattroff(w, COLOR_PAIR(3));
@@ -86,11 +88,30 @@ void menu_draw(scrolling_menu* m) {
     }
 }
 
-void menu_resize(scrolling_menu* m, size_t hgt, size_t wdt) {
+void menu_resize(scrolling_menu* m, size_t hgt, size_t wdt, size_t y_pos, size_t x_pos) {
+    m->height = hgt;
+    m->width = wdt;
+    wresize(m->win, hgt, wdt);
+    mvwin(m->win, y_pos, x_pos);
+}
 
+void menu_focus(scrolling_menu* m) {
+    m->focused = true;
+}
+
+void menu_unfocus(scrolling_menu* m) {
+    m->focused = false;
 }
 
 void* menu_get_selected(scrolling_menu* m) {
     assert(m->idx <= JVEC_len(m->vec));
     return JVEC_get(m->vec, m->idx);
+}
+
+int menu_change_vec(scrolling_menu* m, JVEC* vec) {
+
+    m->vec = vec;
+    m->idx = 0;
+    m->top = 0;
+    return 0;
 }

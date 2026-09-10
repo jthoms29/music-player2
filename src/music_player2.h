@@ -264,25 +264,23 @@ void lib_mem_free(lib_mem** lib_ptr);
 
 /* model func*/
 
-model* model_new(lib_mem* lib);
+elements* elements_new(lib_mem* lib);
 
 /* VIEW FUNCTIONS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
 void view_init();
 
-void draw_selection_menu(WINDOW* w, model* mod, view* vw, int8_t col_idx, size_t hgt, size_t wdt, char* (*str_func)(void*));
 
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt);
 
 void main_loop(lib_mem* lib);
-void scroll_menu(model* m, view* v, lib_mem* lib, int8_t dir);
-void change_column(model* m, int8_t dir);
 
 
+void change_column(elements* e, int8_t dir);
+void resize_elements(elements* e);
 
-void resize_elements(view* v);
-int draw_screen(view* v, model* m);
-view* view_new();
+int draw_screen(elements* e);
+void ncurses_init();
 #endif
 

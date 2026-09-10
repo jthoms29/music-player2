@@ -7,11 +7,10 @@ void main_loop(lib_mem* lib) {
     int rows, cols;
     size_t menu_wdt = 0, menu_hgt = 0;
 
-    view* v = view_new();
-
-    model* m = model_new(lib);
+    ncurses_init();
+    elements* e = elements_new(lib);
    
-    resize_elements(v);
+    resize_elements(e);
 
     int ch;
     uint8_t exit_flag = 0;
@@ -23,34 +22,34 @@ void main_loop(lib_mem* lib) {
 
     int draw_ret;
     while (!exit_flag) {
-        draw_ret = draw_screen(v, m);
+        draw_ret = draw_screen(e);
         // get input
         ch = getch();
         switch(ch) {
             case KEY_RESIZE:
                 // Screen has been resized, redraw windows
-                resize_elements(v);
+                resize_elements(e);
                 break;
 
             //scroll current win down
             case 'j':
             case 'J':
-                scroll_menu(m, v, lib, 1);
+                menu_scroll(e->menus[e->col_idx], 1);
                 break;
             //scroll current win up
             case 'k':
             case 'K':
-                scroll_menu(m, v, lib, -1);
+                menu_scroll(e->menus[e->col_idx], -1);
                 break;
             //move to prev column
             case 'h':
             case 'H':
-                change_column(m, -1);
+                change_column(e, -1);
                 break;
             // move to next column
             case 'l':
             case 'L':
-                change_column(m, 1);
+                change_column(e, 1);
                 break;
 
             // exit program
