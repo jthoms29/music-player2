@@ -31,13 +31,13 @@ void menu_scroll(scrolling_menu* m, int dir) {
     // update row index to reflect user input
     m->idx += dir;
 
-    // if difference between top and idx greater than height, move top down
-    if (m->idx - m->top >= rows-2) {
-        m->top = m->idx - (rows-2) + 1;
-    }
     // if idx less than top, move top up
     if (m->idx < m->top) {
         m->top = m->idx;
+    }
+    // if difference between top and idx greater than height, move top down
+    else if (m->idx - m->top >= rows-2) {
+        m->top = m->idx - (rows-2) + 1;
     }
 
 }
