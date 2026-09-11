@@ -21,6 +21,7 @@ void main_loop(lib_mem* lib) {
 
 
     int draw_ret;
+    int scrolled = 0;
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
@@ -35,11 +36,13 @@ void main_loop(lib_mem* lib) {
             case 'j':
             case 'J':
                 menu_scroll(e->menus[e->col_idx], 1);
+                scrolled = 1;
                 break;
             //scroll current win up
             case 'k':
             case 'K':
                 menu_scroll(e->menus[e->col_idx], -1);
+                scrolled = 1;
                 break;
             //move to prev column
             case 'h':
@@ -57,7 +60,19 @@ void main_loop(lib_mem* lib) {
             case 'Q':
                 exit_flag = 1;
                 break;
-            
+        }
+        if (scrolled) {
+
+            if (e->col_idx == 0) {
+                JVEC* albums_vec = ((artist*) menu_get_selected(e->menus[0]))->albums;
+                menu_change_vec(e->menus[1], albums_vec);
+            }
+            if (e->col_idx < 2) {
+                JVEC* songs_vec = ((album*)menu_get_selected(e->menus[1]))->songs;
+                menu_change_vec(e->menus[2], songs_vec);
+            }
+            scrolled = 0;
+
         }
     }
     endwin();

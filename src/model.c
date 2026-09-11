@@ -40,8 +40,8 @@ elements* elements_new(lib_mem* lib) {
     }
     e->menus = menus;
     e->menus[0] = menu_new(lib->artists, artist_string);
-    e->menus[1] = menu_new(lib->albums, album_string);
-    e->menus[2] = menu_new(lib->songs, song_string);
+    e->menus[1] = menu_new(((artist*)JVEC_get(e->menus[0]->vec, 0))->albums, album_string);
+    e->menus[2] = menu_new(((album*)JVEC_get(e->menus[1]->vec, 0))->songs, song_string);
     menu_focus(e->menus[0]);
     return e;
 }
@@ -54,9 +54,6 @@ void change_column(elements* e, int8_t dir) {
     }
     menu_unfocus(e->menus[e->col_idx]);
 
-    if (e->col_idx == 0) {
-        //DDDDDDDDDDDDDDDDDDDDD
-    }
 
 
     e->col_idx += dir;

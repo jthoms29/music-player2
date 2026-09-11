@@ -30,6 +30,7 @@ void menu_resize(scrolling_menu* m, size_t hgt, size_t wdt, size_t y_pos, size_t
 void menu_focus(scrolling_menu* m);
 
 void menu_unfocus(scrolling_menu* m);
-void* menu_get_element(scrolling_menu* m);
+void* menu_get_selected(scrolling_menu* m);
 
+int menu_change_vec(scrolling_menu* m, JVEC* vec);
 #endif
