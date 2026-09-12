@@ -9,6 +9,7 @@
 #include <../../JLib/src/JVEC.h>
 #include <../../JLib/src/JARENA.h>
 #include <scrolling_menu.h>
+#include <playback_menu.h>
 
 #define MIN_ROWS 9
 #define MIN_COLS 15
@@ -94,7 +95,7 @@ typedef struct elements {
     scrolling_menu** menus;
     // currently selected window
     size_t col_idx;
-    WINDOW* playback_win;
+    playback_menu* playback_menu;
 } elements;
 
 

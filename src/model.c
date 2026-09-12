@@ -1,5 +1,6 @@
 #include <music_player2.h>
 #include <scrolling_menu.h>
+#include <playback_menu.h>
 
 char* artist_string(void* atst) {
     if (!atst) {
@@ -43,6 +44,8 @@ elements* elements_new(lib_mem* lib) {
     e->menus[1] = menu_new(((artist*)JVEC_get(e->menus[0]->vec, 0))->albums, album_string);
     e->menus[2] = menu_new(((album*)JVEC_get(e->menus[1]->vec, 0))->songs, song_string);
     menu_focus(e->menus[0]);
+
+    e->playback_menu = playback_new();
     return e;
 }
 
@@ -53,9 +56,6 @@ void change_column(elements* e, int8_t dir) {
         return;
     }
     menu_unfocus(e->menus[e->col_idx]);
-
-
-
     e->col_idx += dir;
     menu_focus(e->menus[e->col_idx]);
 }

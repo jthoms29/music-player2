@@ -2,7 +2,6 @@
 #include <sqlite3.h>
 #include <ncurses.h>
 
-
 void main_loop(lib_mem* lib) {
     int rows, cols;
     size_t menu_wdt = 0, menu_hgt = 0;
@@ -60,6 +59,9 @@ void main_loop(lib_mem* lib) {
             case 'Q':
                 exit_flag = 1;
                 break;
+
+            case KEY_ENTER:
+                if (e->col_idx == 2)
         }
         if (scrolled) {
 
