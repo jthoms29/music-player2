@@ -97,9 +97,10 @@ void main_loop(lib_mem* lib) {
 
                 case 'p':
                     if (e->col_idx == 2) {
-                        song* sng = menu_get_selected(e->menus[2]);
-                        playback_change_song(e->playback_menu, sng);
-                        audio_load_song(player, sng);
+                        album* abm = menu_get_selected(e->menus[1]);
+                        size_t idx = e->menus[2]->idx;
+                        playback_change_song(e->playback_menu, abm, idx);
+                        audio_load_song(player, e->playback_menu->selected_sng);
                     }
 
                     break;

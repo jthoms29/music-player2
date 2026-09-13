@@ -17,16 +17,21 @@ playback_menu* playback_new() {
     return pb;
 }
 
-int playback_change_song(playback_menu *pb, song *s) {
-    pb->selected = s;
+int playback_change_song(playback_menu *pb, album* abm, size_t idx) {
+    song* sng = JVEC_get(abm->songs, idx);
+    printf("%s\n", sng->title);
+    pb->selected_abm = abm;
+    pb->selected_sng = sng;
+    pb->sng_idx = idx;
     pb->elapsed_s = 0;
-    pb->time_s = s->dur_s;
+    pb->time_s = sng->dur_s;
     return 0;
 }
 
 int playback_update_elapsed(playback_menu *pb, size_t new_s) {
     assert(new_s <= pb->time_s);
     pb->elapsed_s = new_s;
+    return 0;
 }
 void playback_resize(playback_menu *pb, int hgt, int wdt, int y) {
     pb->hgt = hgt;
