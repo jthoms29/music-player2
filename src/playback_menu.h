@@ -15,6 +15,8 @@ typedef struct playback_menu {
     size_t time_s;
     size_t elapsed_s;
 
+    bool ready;
+
     WINDOW* win;
 } playback_menu;
 

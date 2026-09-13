@@ -100,7 +100,7 @@ void main_loop(lib_mem* lib) {
                         album* abm = menu_get_selected(e->menus[1]);
                         size_t idx = e->menus[2]->idx;
                         playback_change_song(e->playback_menu, abm, idx);
-                        audio_load_song(player, e->playback_menu->selected_sng);
+                        audio_load_album(player, abm, idx, e->playback_menu);
                     }
 
                     break;
@@ -118,6 +118,12 @@ void main_loop(lib_mem* lib) {
                 scrolled = 0;
 
             }
+        }
+        if (e->playback_menu->ready) {
+            album* abm = menu_get_selected(e->menus[1]);
+            size_t idx = ++e->menus[2]->idx;
+            playback_change_song(e->playback_menu, abm, idx);
+            audio_load_album(player, abm, idx, e->playback_menu);
         }
     }
     endwin();

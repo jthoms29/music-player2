@@ -13,6 +13,7 @@ playback_menu* playback_new() {
     WINDOW* pb_win = newwin(0,0,0,0);
 
     pb->win = pb_win;
+    pb->ready = false;
 
     return pb;
 }
@@ -24,6 +25,7 @@ int playback_change_song(playback_menu *pb, album* abm, size_t idx) {
     pb->sng_idx = idx;
     pb->elapsed_s = 0;
     pb->time_s = sng->dur_s;
+    pb->ready = false;
     return 0;
 }
 
