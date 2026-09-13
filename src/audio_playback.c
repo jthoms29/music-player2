@@ -7,24 +7,13 @@
 void data_callback(ma_device *pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
     audio_player *player = pDevice->pUserData;
 
-    if (!player->decoder_initialized) {
-        memset(
-            pOutput,
-            0,
-            frameCount *
-            pDevice->playback.channels *
-            ma_get_bytes_per_sample(pDevice->playback.format)
-        );
-        return;
+    ma_uint64 frames_read;
+    ma_decoder_read_pcm_frames(&player->decoder, pOutput, frameCount, &frames_read);
+
+
+    // song completed
+    if (frames_read < frameCount) {
     }
-
-    ma_decoder_read_pcm_frames(
-        &player->decoder,
-        pOutput,
-        frameCount,
-        NULL
-    );
-
     (void)pInput;
 
 }
@@ -35,18 +24,13 @@ audio_player* audio_new() {
         perror("audio_new(): failed to alloc new player");
         return NULL;
     }
-    if (pthread_mutex_init(&player->mutex, NULL)) {
-        fprintf(stderr, "audio_new(): Failed to init player mutex\n");
-        free(player);
-        return NULL;
-    }
 
     // init playback device
     ma_device_config config = ma_device_config_init(ma_device_type_playback);
 
     config.playback.format   = ma_format_f32;   // Set to ma_format_unknown to use the device's native format.
     config.playback.channels = 2;               // Set to 0 to use the device's native channel count.
-    config.sampleRate        = 44100;               // Set to 0 to use the device's native sample rate.
+    config.sampleRate        = 0;               // Set to 0 to use the device's native sample rate.
     config.dataCallback      = data_callback;   // This function will be called when miniaudio needs more data.
     config.pUserData         = player;   // Can be accessed from the device object (device.pUserData).
 
@@ -64,7 +48,6 @@ audio_player* audio_new() {
 
     return player;
     uh_oh:
-        pthread_mutex_destroy(&player->mutex);
         free(player);
         return NULL;
 }
