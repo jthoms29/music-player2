@@ -10,6 +10,7 @@
 #include <../../JLib/src/JARENA.h>
 #include <scrolling_menu.h>
 #include <playback_menu.h>
+#include <music_defs.h>
 
 #define MIN_ROWS 9
 #define MIN_COLS 15
@@ -38,44 +39,6 @@ typedef struct lib_db {
 
 
 
-typedef struct song {
-    int song_id;
-    int album_id;
-    int track_num;
-    int dur_s;
-    int bitrate;
-    int sample_rate;
-    int channels;
-    char* title;
-    char* path;
-    char* comment;
-
-    // not allocated within song init function
-    char* artist_name;
-    char* album_title;
-    char* date;
-    char* orig_date;
-} song;
-
-typedef struct album {
-    int album_id;
-    int artist_id;
-    int tracks;
-
-    char* title;
-    char* genre;
-    char* date;
-    char* orig_date;
-    JVEC* songs;
-
-    // not allocated within album init function
-    char* artist_name;
-} album;
-
-typedef struct artist {
-    char* name;
-    JVEC* albums;
-} artist;
 
 typedef struct lib_mem {
     JVEC* artists;
@@ -96,6 +59,7 @@ typedef struct elements {
     // currently selected window
     size_t col_idx;
     playback_menu* playback_menu;
+    song* selected_song;
 } elements;
 
 

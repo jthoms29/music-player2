@@ -4,12 +4,6 @@
 #include <assert.h>
 
 
-#define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
-
-
-
-
-
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
     werase(w);
@@ -27,9 +21,13 @@ void ncurses_init() {
     mouseinterval(0);
     keypad(stdscr, TRUE);
 
+
+    keypad(stdscr, TRUE);
+    nodelay(stdscr, FALSE);
+
     curs_set(0);
     // block on getch();
-    timeout(-1);
+    timeout(0);
 
     // make it so black squares can be drawn to screen
     start_color();
@@ -37,6 +35,7 @@ void ncurses_init() {
     init_pair(1, COLOR_BLACK, COLOR_WHITE);
     init_pair(2, COLOR_YELLOW, -1);
     init_pair(3, COLOR_BLACK, COLOR_YELLOW);
+    init_pair(4, COLOR_WHITE, COLOR_BLACK);
 
 }
 
@@ -44,6 +43,9 @@ void resize_elements(elements* e) {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
+    if (rows < 7 || cols < 3) {
+        return;
+    }
     // update size vals
     size_t sw = cols/3;
     size_t sh = rows - 6;
@@ -51,8 +53,7 @@ void resize_elements(elements* e) {
     menu_resize(e->menus[0], sh, sw, 0, 0);
     menu_resize(e->menus[1], sh, sw, 0, sw);
     menu_resize(e->menus[2], sh, sw, 0, sw*2);
-    wresize(e->playback_win, 6, sw*3);
-    mvwin(e->playback_win, sh, 0);
+    playback_resize(e->playback_menu, 6, sw*3, sh);
 }
 
 int draw_screen(elements* e) {
@@ -70,11 +71,13 @@ int draw_screen(elements* e) {
     menu_draw(e->menus[0]);
     menu_draw(e->menus[1]);
     menu_draw(e->menus[2]);
+    playback_draw(e->playback_menu);
     // TODO!!! change
     wnoutrefresh(stdscr);
     wnoutrefresh(e->menus[0]->win);
     wnoutrefresh(e->menus[1]->win);
     wnoutrefresh(e->menus[2]->win);
+    wnoutrefresh(e->playback_menu->win);
     doupdate();
     return 0;
 }

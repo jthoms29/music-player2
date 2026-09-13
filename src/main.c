@@ -1,6 +1,9 @@
+#include <complex.h>
 #include <music_player2.h>
 #include <sqlite3.h>
 #include <ncurses.h>
+#include <poll.h>
+#include <errno.h>
 
 void main_loop(lib_mem* lib) {
     int rows, cols;
@@ -17,64 +20,80 @@ void main_loop(lib_mem* lib) {
     // flag to resize windows
     int resize = 1;
 
-
+    struct pollfd fd;
+    fd.fd = 0;
+    fd.events = POLLIN;
 
     int draw_ret;
     int scrolled = 0;
+    e->playback_menu->time_s = 120;
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
-        ch = getch();
-        switch(ch) {
-            case KEY_RESIZE:
-                // Screen has been resized, redraw windows
-                resize_elements(e);
-                break;
 
-            //scroll current win down
-            case 'j':
-            case 'J':
-                menu_scroll(e->menus[e->col_idx], 1);
-                scrolled = 1;
-                break;
-            //scroll current win up
-            case 'k':
-            case 'K':
-                menu_scroll(e->menus[e->col_idx], -1);
-                scrolled = 1;
-                break;
-            //move to prev column
-            case 'h':
-            case 'H':
-                change_column(e, -1);
-                break;
-            // move to next column
-            case 'l':
-            case 'L':
-                change_column(e, 1);
-                break;
+        int pollret = poll(&fd, 1, 1000);
 
-            // exit program
-            case 'q':
-            case 'Q':
-                exit_flag = 1;
-                break;
-
-            case KEY_ENTER:
-                if (e->col_idx == 2)
+        // poll doesn't like resize, ignore EINTR
+        if (pollret < 0 && errno != EINTR) {
+            perror("poll");
+            break;
         }
-        if (scrolled) {
+        if (pollret == 0) {
+           e->playback_menu->elapsed_s++;
+           draw_screen(e); 
+        }
+        if (fd.revents & POLLIN) {
+            ch = getch();
+            switch(ch) {
+                case KEY_RESIZE:
+                    // Screen has been resized, redraw windows
+                    resize_elements(e);
+                    clear();
+                    refresh();
+                    break;
 
-            if (e->col_idx == 0) {
-                JVEC* albums_vec = ((artist*) menu_get_selected(e->menus[0]))->albums;
-                menu_change_vec(e->menus[1], albums_vec);
-            }
-            if (e->col_idx < 2) {
-                JVEC* songs_vec = ((album*)menu_get_selected(e->menus[1]))->songs;
-                menu_change_vec(e->menus[2], songs_vec);
-            }
-            scrolled = 0;
+                //scroll current win down
+                case 'j':
+                case 'J':
+                    menu_scroll(e->menus[e->col_idx], 1);
+                    scrolled = 1;
+                    break;
+                //scroll current win up
+                case 'k':
+                case 'K':
+                    menu_scroll(e->menus[e->col_idx], -1);
+                    scrolled = 1;
+                    break;
+                //move to prev column
+                case 'h':
+                case 'H':
+                    change_column(e, -1);
+                    break;
+                // move to next column
+                case 'l':
+                case 'L':
+                    change_column(e, 1);
+                    break;
 
+                // exit program
+                case 'q':
+                case 'Q':
+                    exit_flag = 1;
+                    break;
+            }
+            if (scrolled) {
+
+                if (e->col_idx == 0) {
+                    JVEC* albums_vec = ((artist*) menu_get_selected(e->menus[0]))->albums;
+                    menu_change_vec(e->menus[1], albums_vec);
+                }
+                if (e->col_idx < 2) {
+                    JVEC* songs_vec = ((album*)menu_get_selected(e->menus[1]))->songs;
+                    menu_change_vec(e->menus[2], songs_vec);
+                }
+                scrolled = 0;
+
+            }
         }
     }
     endwin();
