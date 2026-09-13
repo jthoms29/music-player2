@@ -1,9 +1,11 @@
 #include <complex.h>
 #include <music_player2.h>
+#include <scrolling_menu.h>
 #include <sqlite3.h>
 #include <ncurses.h>
 #include <poll.h>
 #include <errno.h>
+#include <audio_playback.h>
 
 void main_loop(lib_mem* lib) {
     int rows, cols;
@@ -27,6 +29,12 @@ void main_loop(lib_mem* lib) {
     int draw_ret;
     int scrolled = 0;
     e->playback_menu->time_s = 120;
+
+
+
+    // setup audio
+    audio_player* player = audio_new();
+
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
@@ -38,10 +46,15 @@ void main_loop(lib_mem* lib) {
             perror("poll");
             break;
         }
+
+        //timeout, update progress bar if applicable
         if (pollret == 0) {
-           e->playback_menu->elapsed_s++;
-           draw_screen(e); 
+            if (player->decoder_initialized) {
+                e->playback_menu->elapsed_s = audio_current_pos(player);
+                draw_screen(e); 
+            }
         }
+
         if (fd.revents & POLLIN) {
             ch = getch();
             switch(ch) {
@@ -79,6 +92,15 @@ void main_loop(lib_mem* lib) {
                 case 'q':
                 case 'Q':
                     exit_flag = 1;
+                    break;
+
+                case 'p':
+                    if (e->col_idx == 2) {
+                        song* sng = menu_get_selected(e->menus[2]);
+                        printf("%s\n", sng->path);
+                        audio_load_song(player, sng);
+                    }
+
                     break;
             }
             if (scrolled) {

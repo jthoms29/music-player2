@@ -37,6 +37,7 @@ void playback_resize(playback_menu *pb, int hgt, int wdt, int y) {
 
 void playback_draw(playback_menu *pb) {
     WINDOW* w = pb->win;
+    werase(w);
     box(w, 0, 0);
    
     int bar = pb->wdt * 4 / 6;
