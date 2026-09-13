@@ -1,5 +1,6 @@
 #include <complex.h>
 #include <music_player2.h>
+#include <playback_menu.h>
 #include <scrolling_menu.h>
 #include <sqlite3.h>
 #include <ncurses.h>
@@ -97,7 +98,7 @@ void main_loop(lib_mem* lib) {
                 case 'p':
                     if (e->col_idx == 2) {
                         song* sng = menu_get_selected(e->menus[2]);
-                        printf("%s\n", sng->path);
+                        playback_change_song(e->playback_menu, sng);
                         audio_load_song(player, sng);
                     }
 

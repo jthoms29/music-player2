@@ -44,6 +44,7 @@ void playback_draw(playback_menu *pb) {
     int bar_offset = (pb->wdt - bar)/2;
     int filled_ratio = 0;
 
+    mvwprintw(w, 1, 1, "%ld/%ld\n", pb->elapsed_s, pb->time_s);
     if (pb->time_s != 0) {
         filled_ratio = bar * pb->elapsed_s / pb->time_s;
     }
