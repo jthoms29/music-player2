@@ -50,7 +50,7 @@ void main_loop(lib_mem* lib) {
 
         //timeout, update progress bar if applicable
         if (pollret == 0) {
-            if (player->decoder_initialized) {
+            if (player->playing) {
                 e->playback_menu->elapsed_s = audio_current_pos(player);
                 draw_screen(e); 
             }

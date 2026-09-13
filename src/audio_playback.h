@@ -5,13 +5,11 @@
 #include <music_defs.h>
 
 typedef struct audio_player {
-    ma_device device;
-    ma_decoder decoder;
+    ma_engine engine;
+    ma_sound sound;
 
-    bool decoder_initialized;
     bool playing;
 
-    pthread_mutex_t mutex;
 } audio_player;
 
 audio_player* audio_new();

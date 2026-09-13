@@ -19,7 +19,6 @@ playback_menu* playback_new() {
 
 int playback_change_song(playback_menu *pb, album* abm, size_t idx) {
     song* sng = JVEC_get(abm->songs, idx);
-    printf("%s\n", sng->title);
     pb->selected_abm = abm;
     pb->selected_sng = sng;
     pb->sng_idx = idx;
