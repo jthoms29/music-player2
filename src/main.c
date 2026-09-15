@@ -54,6 +54,11 @@ void main_loop(lib_mem* lib) {
                 e->playback_menu->elapsed_s = audio_current_pos(player);
                 draw_screen(e); 
             }
+            // next song ready to be played
+            if (player->ready) {
+                playback_next_song(e->playback_menu);
+                audio_load_song(player, e->playback_menu->cur_song);
+            }
         }
 
         if (fd.revents & POLLIN) {
@@ -99,8 +104,8 @@ void main_loop(lib_mem* lib) {
                     if (e->col_idx == 2) {
                         album* abm = menu_get_selected(e->menus[1]);
                         size_t idx = e->menus[2]->idx;
-                        playback_change_song(e->playback_menu, abm, idx);
-                        audio_load_album(player, abm, idx, e->playback_menu);
+                        playback_change_song(e->playback_menu, abm->songs, idx);
+                        audio_load_song(player, e->playback_menu->cur_song);
                     }
 
                     break;
@@ -119,11 +124,9 @@ void main_loop(lib_mem* lib) {
 
             }
         }
-        if (e->playback_menu->ready) {
-            album* abm = menu_get_selected(e->menus[1]);
-            size_t idx = ++e->menus[2]->idx;
-            playback_change_song(e->playback_menu, abm, idx);
-            audio_load_album(player, abm, idx, e->playback_menu);
+        if (player->ready) {
+            playback_next_song(e->playback_menu);
+            audio_load_song(player, e->playback_menu->cur_song);
         }
     }
     endwin();

@@ -9,18 +9,16 @@ typedef struct audio_player {
     ma_engine engine;
     ma_sound sound;
 
-    album* abm;
-    size_t idx;
     bool playing;
+
+    bool ready;
 
 } audio_player;
 
 audio_player* audio_new();
 
 
-int audio_load_song(audio_player* player, song* song, playback_menu* pm);
 
 double audio_current_pos(audio_player *player);
-
-int audio_load_album(audio_player* ap, album* abm, size_t idx, playback_menu* pm);
+int audio_load_song(audio_player* ap, song* song);
 #endif

@@ -5,9 +5,10 @@
 #include <ncurses.h>
 
 typedef struct playback_menu {
-    album* selected_abm;
-    size_t sng_idx;
-    song* selected_sng;
+    JVEC* playlist;
+    size_t playlist_idx;
+    song* cur_song;
+
     bool paused;
     size_t hgt;
     size_t wdt;
@@ -21,9 +22,9 @@ typedef struct playback_menu {
 } playback_menu;
 
 playback_menu* playback_new();
-int playback_change_song(playback_menu *pb, album* abm, size_t idx);
-
-
+int playback_change_song(playback_menu *pb, JVEC* playlist, size_t idx);
+int playback_next_song(playback_menu *pb);
+song* playback_cur_song(playback_menu* pb);
 void playback_resize(playback_menu *pb, int hgt, int wdt, int y);
 
 void playback_draw(playback_menu *pb);

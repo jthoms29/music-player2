@@ -18,15 +18,30 @@ playback_menu* playback_new() {
     return pb;
 }
 
-int playback_change_song(playback_menu *pb, album* abm, size_t idx) {
-    song* sng = JVEC_get(abm->songs, idx);
-    pb->selected_abm = abm;
-    pb->selected_sng = sng;
-    pb->sng_idx = idx;
+int playback_change_song(playback_menu *pb, JVEC* playlist, size_t idx) {
+    song* sng = JVEC_get(playlist, idx);
+    pb->cur_song = sng;
+    pb->playlist = playlist;
+    pb->playlist_idx = idx;
     pb->elapsed_s = 0;
     pb->time_s = sng->dur_s;
     pb->ready = false;
     return 0;
+}
+
+int playback_next_song(playback_menu *pb) {
+    size_t new_idx = pb->playlist_idx+1;
+    if (new_idx >= JVEC_len(pb->playlist)) {
+        pb->ready = false;
+        return 0;
+    }
+
+    pb->playlist_idx = new_idx;
+    pb->cur_song = JVEC_get(pb->playlist, new_idx);
+    pb->elapsed_s = 0;
+    pb->time_s = pb->cur_song->dur_s;
+    pb->ready = false;
+    return 1;
 }
 
 int playback_update_elapsed(playback_menu *pb, size_t new_s) {
@@ -62,4 +77,9 @@ void playback_draw(playback_menu *pb) {
     }
 
 
+}
+
+
+song* playback_cur_song(playback_menu* pb) {
+    return JVEC_get(pb->playlist, pb->playlist_idx);
 }
