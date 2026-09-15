@@ -1,3 +1,4 @@
+#include <ncurses.h>
 #include <scrolling_menu.h>
 #include <assert.h>
 
@@ -7,14 +8,35 @@ scrolling_menu* menu_new(JVEC* vec, char* (*str_func)(void*)) {
         perror("menu_new(): failed to allocate new scrolling menu");
         return NULL;
     }
-    WINDOW* w = newwin(0, 0, 0, 0);
-    m->win = w;
 
+    WINDOW* w = newwin(0, 0, 0, 0);
+    if (!w) {
+        fprintf(stderr, "menu_new(): Failed to create new ncurses window");
+        free(m);
+        return NULL;
+    }
+
+    m->win = w;
     m->vec = vec;
     m->str_func = str_func;
 
     return m;
 }
+
+
+void menu_free(scrolling_menu** menu_ptr) {
+    if (!(*menu_ptr)) { return; }
+
+    // uninit ncurses window
+    if ((*menu_ptr)->win) {
+        delwin((*menu_ptr)->win);
+    }
+
+    // free struct itself
+    free(*menu_ptr);
+    *menu_ptr = NULL;
+}
+
 
 void menu_scroll(scrolling_menu* m, int dir) {
     JVEC* vec = m->vec;
@@ -42,7 +64,7 @@ void menu_scroll(scrolling_menu* m, int dir) {
 
 }
 
-void menu_draw(scrolling_menu* m) {
+int menu_draw(scrolling_menu* m) {
     WINDOW* w = m->win;
     werase(w);
 
@@ -58,16 +80,17 @@ void menu_draw(scrolling_menu* m) {
 
     // vector for current window
     JVEC* vec = m->vec;
-
+    int hgt = m->height;
+    int idx = m->idx, top = m->top, wdt = m->width;
     char* str;
 
-    size_t hgt = m->height;
+    // window currently not large enough to visualize menu
+    if (hgt <= 2 || wdt <= 2) {
+        return 1;
+    }
 
-    size_t idx = m->idx, top = m->top, wdt = m->width;
-    assert(hgt > 2);
-    assert(wdt > 2);
     // print vector elements currently visible within window
-    for (size_t i = 0; i < hgt-2; i++) {
+    for (int i = 0; i < hgt-2; i++) {
         str = m->str_func(JVEC_get(vec, top+i));
         // if both element and window currently selected
         if (top+i == idx && m->focused) {
@@ -86,9 +109,11 @@ void menu_draw(scrolling_menu* m) {
             mvwaddnstr(w, i+1, 1, str, wdt-2);
         }
     }
+    // refresh window
+    wnoutrefresh(w);
 }
 
-void menu_resize(scrolling_menu* m, size_t hgt, size_t wdt, size_t y_pos, size_t x_pos) {
+void menu_resize(scrolling_menu* m, int hgt, int wdt, int y_pos, int x_pos) {
     m->height = hgt;
     m->width = wdt;
     wresize(m->win, hgt, wdt);
