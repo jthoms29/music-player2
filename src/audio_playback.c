@@ -1,12 +1,15 @@
 #include <miniaudio.h>
 #include <music_defs.h>
 #include <playback_menu.h>
-
+#include <unistd.h>
 #include <audio_playback.h>
 
 void end_callback(void* pUserData, ma_sound* pSound) {
+    audio_player *ap = pUserData;
 
-    // signal poll somehow
+    // signal poll to switch song
+    uint8_t signal = 1;
+    write(ap->notify_write_fd, &signal, 1);
 }
 
 
@@ -23,6 +26,15 @@ audio_player* audio_new() {
         free(ap);
         return NULL;
     }
+
+    int notify[2];
+    if (pipe(notify) == -1) {
+        perror("audio_new(): failed to create pipe");
+        free(ap);
+        ma_engine_uninit(&ap->engine);
+    }
+    ap->notify_read_fd = notify[0];
+    ap->notify_write_fd = notify[1];
     return ap;
 }
 
@@ -33,6 +45,11 @@ void audio_free(audio_player** ap_ptr) {
     ma_engine_uninit(&(*ap_ptr)->engine); // :)
     ma_sound_uninit(&(*ap_ptr)->sound);
     
+
+    // close the pipe
+    close((*ap_ptr)->notify_read_fd);
+    close((*ap_ptr)->notify_write_fd);
+
     // free the ap struct itself
     free(*ap_ptr);
     *ap_ptr = NULL;

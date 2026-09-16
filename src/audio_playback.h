@@ -8,6 +8,10 @@
 typedef struct audio_player {
     ma_engine engine;
     ma_sound sound;
+
+    // for telling main thread to switch to next song
+    int notify_read_fd;
+    int notify_write_fd;
 } audio_player;
 
 /**
@@ -68,6 +72,5 @@ bool audio_is_playing(audio_player* ap);
  * @return 0 on success, anything else on failure
  */
 int audio_pause(audio_player* ap);
-
 
 #endif
