@@ -7,6 +7,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <audio_playback.h>
+#include <unistd.h>
 
 void main_loop(lib_mem* lib) {
     int rows, cols;
@@ -23,24 +24,31 @@ void main_loop(lib_mem* lib) {
     // flag to resize windows
     int resize = 1;
 
-    struct pollfd fd;
-    fd.fd = 0;
-    fd.events = POLLIN;
-
-    int draw_ret;
-    int scrolled = 0;
-    e->playback_menu->time_s = 120;
-
 
 
     // setup audio
     audio_player* player = audio_new();
 
+    struct pollfd fds[2];
+    fds[0].fd = 0;
+    fds[0].events = POLLIN;
+
+    //?????
+    fds[1].fd = player->notify_read_fd;
+    fds[1].events = POLLIN;
+
+    int draw_ret;
+    int scrolled = 0;
+    e->playback_menu->time_s = 0;
+
+
+
+
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
 
-        int pollret = poll(&fd, 1, 1000);
+        int pollret = poll(fds, 2, 1000000000);
 
         // poll doesn't like resize, ignore EINTR
         if (pollret < 0 && errno != EINTR) {
@@ -50,18 +58,16 @@ void main_loop(lib_mem* lib) {
 
         //timeout, update progress bar if applicable
         if (pollret == 0) {
-            if (player->playing) {
-                e->playback_menu->elapsed_s = audio_current_pos(player);
-                draw_screen(e); 
-            }
-            // next song ready to be played
-            if (player->ready) {
-                playback_next_song(e->playback_menu);
-                audio_load_song(player, e->playback_menu->cur_song);
-            }
+        }
+        if (fds[1].revents & POLLIN) {
+            uint8_t signal;
+            read(player->notify_read_fd, &signal, 1);
+            playback_next_song(e->playback_menu);
+            audio_load_song(player, e->playback_menu->cur_song);
+            continue;
         }
 
-        if (fd.revents & POLLIN) {
+        if (fds[0].revents & POLLIN) {
             ch = getch();
             switch(ch) {
                 case KEY_RESIZE:
@@ -123,10 +129,6 @@ void main_loop(lib_mem* lib) {
                 scrolled = 0;
 
             }
-        }
-        if (player->ready) {
-            playback_next_song(e->playback_menu);
-            audio_load_song(player, e->playback_menu->cur_song);
         }
     }
     endwin();

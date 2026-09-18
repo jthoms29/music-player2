@@ -10,10 +10,15 @@ playback_menu* playback_new() {
         perror("playback_new(): failed to alloc new playback_menu");
         return NULL;
     }
+
     WINDOW* pb_win = newwin(0,0,0,0);
+    if (!pb_win) {
+        fprintf(stderr, "playback_new(): failed to create playback menu's window\n");
+        free(pb);
+        return NULL; 
+    }
 
     pb->win = pb_win;
-    pb->ready = false;
 
     return pb;
 }
@@ -25,14 +30,12 @@ int playback_change_song(playback_menu *pb, JVEC* playlist, size_t idx) {
     pb->playlist_idx = idx;
     pb->elapsed_s = 0;
     pb->time_s = sng->dur_s;
-    pb->ready = false;
     return 0;
 }
 
 int playback_next_song(playback_menu *pb) {
     size_t new_idx = pb->playlist_idx+1;
     if (new_idx >= JVEC_len(pb->playlist)) {
-        pb->ready = false;
         return 0;
     }
 
@@ -40,7 +43,6 @@ int playback_next_song(playback_menu *pb) {
     pb->cur_song = JVEC_get(pb->playlist, new_idx);
     pb->elapsed_s = 0;
     pb->time_s = pb->cur_song->dur_s;
-    pb->ready = false;
     return 1;
 }
 

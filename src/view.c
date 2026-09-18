@@ -74,10 +74,6 @@ int draw_screen(elements* e) {
     playback_draw(e->playback_menu);
     // TODO!!! change
     wnoutrefresh(stdscr);
-    wnoutrefresh(e->menus[0]->win);
-    wnoutrefresh(e->menus[1]->win);
-    wnoutrefresh(e->menus[2]->win);
-    wnoutrefresh(e->playback_menu->win);
     doupdate();
     return 0;
 }

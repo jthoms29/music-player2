@@ -111,6 +111,7 @@ int menu_draw(scrolling_menu* m) {
     }
     // refresh window
     wnoutrefresh(w);
+    return 0;
 }
 
 void menu_resize(scrolling_menu* m, int hgt, int wdt, int y_pos, int x_pos) {

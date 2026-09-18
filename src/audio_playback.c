@@ -60,8 +60,8 @@ void audio_free(audio_player** ap_ptr) {
 int audio_load_song(audio_player* ap, song* sng) {
     ma_result res;
 
-    // if song is currently playing, stop it
-    if (ma_sound_is_playing(&ap->sound)) {
+    // if song was initialized before this, get rid of it
+    if (ma_sound_is_playing(&ap->sound) || ma_sound_at_end(&ap->sound)) {
         ma_sound_uninit(&ap->sound);
     }
 
