@@ -52,7 +52,7 @@ int audio_load_song(audio_player* ap, song* sng);
  * @post Time of currently playing song returned
  * @return Time in seconds of currently playing song, 0 if no song currently playing
  */
-double audio_current_pos(audio_player *player);
+long audio_current_pos(audio_player *player);
 
 /**
  * @brief Returns if song is currently playing

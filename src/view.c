@@ -68,12 +68,11 @@ int draw_screen(elements* e) {
         return -1;
     }
 
+    wnoutrefresh(stdscr);
     menu_draw(e->menus[0]);
     menu_draw(e->menus[1]);
     menu_draw(e->menus[2]);
     playback_draw(e->playback_menu);
-    // TODO!!! change
-    wnoutrefresh(stdscr);
     doupdate();
     return 0;
 }

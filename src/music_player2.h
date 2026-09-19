@@ -24,12 +24,12 @@ typedef struct lib_db {
     // hashmaps containing the primary keys for each album and artist. Makes it so when building
     // db, don't need to retrieve these primary keys over and over when setting foreign keys.
     // keys are names/album titles, vals are sql primary keys
-    JHASHMAP* artist_cache;
+    JHASHMAP* alb_artist_cache;
     JHASHMAP* album_cache;
 
     // sql statements for inserting and retrieving library elements
-    sqlite3_stmt* insert_artist;
-    sqlite3_stmt* select_artist;
+    sqlite3_stmt* insert_alb_artist;
+    sqlite3_stmt* select_alb_artist;
 
     sqlite3_stmt* insert_album;
     sqlite3_stmt* select_album;
@@ -41,13 +41,13 @@ typedef struct lib_db {
 
 
 typedef struct lib_mem {
-    JVEC* artists;
+    JVEC* alb_artists;
     JVEC* albums;
     JVEC* songs;
 
     // allows structs to be nested efficiently when loading library. Key is sql primary key, vals are 
     // the wanted parent structs
-    JHASHMAP* artist_cache;
+    JHASHMAP* alb_artist_cache;
     JHASHMAP* album_cache;
 
 } lib_mem;
@@ -74,7 +74,7 @@ typedef struct elements {
  * @param[in] path string filepath
  * @pre lib_db must be initialized with lib_db_init()
  * @post if path refers to a valid audio file, the sqlite3 database within lib_db is updated, adding an entry to the songs table,
- * as well as adding or updating the tables for artist and album associated with song
+ * as well as adding or updating the tables for album artist and album associated with song
  * @return 0 on success, anything else on failure
  */
 int read_tags(lib_db* lib_db, char* path);

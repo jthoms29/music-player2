@@ -1,3 +1,4 @@
+#include <ncurses.h>
 #include <playback_menu.h>
 #include <assert.h>
 
@@ -21,6 +22,19 @@ playback_menu* playback_new() {
     pb->win = pb_win;
 
     return pb;
+}
+
+void playback_free(playback_menu** pb_ptr) {
+    if (!(*pb_ptr)) { return; }
+
+    // uninit ncurses window
+    if ((*pb_ptr)->win) {
+        delwin((*pb_ptr)->win);
+    }
+
+    // free struct itself
+    free(*pb_ptr);
+    *pb_ptr = NULL;
 }
 
 int playback_change_song(playback_menu *pb, JVEC* playlist, size_t idx) {
@@ -77,6 +91,8 @@ void playback_draw(playback_menu *pb) {
     for (int i = bar_offset+filled_ratio; i < bar_offset+bar; i++) {
         DRAW_UNFILLED(w, i, 3);
     }
+
+    wnoutrefresh(w);
 
 
 }

@@ -40,6 +40,19 @@ playback_menu* playback_new();
  * @post
  * @return
  */
+void playback_free(playback_menu** pb_ptr);
+
+
+/**
+ * @brief
+ * @details
+ * @note
+ * @param[in]
+ * @param[in]
+ * @pre
+ * @post
+ * @return
+ */
 int playback_change_song(playback_menu *pb, JVEC* playlist, size_t idx);
 
 /**

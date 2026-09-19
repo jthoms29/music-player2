@@ -24,7 +24,7 @@ lib_db* lib_db_new() {
 
         "CREATE TABLE IF NOT EXISTS albums ("
         "album_id INTEGER PRIMARY KEY,"
-        "artist_id INTEGER NOT NULL,"
+        "alb_artist_id INTEGER NOT NULL,"
         "title TEXT NOT NULL,"
         "date TEXT NOT NULL,"
         "orig_date TEXT NOT NULL,"
@@ -35,14 +35,17 @@ lib_db* lib_db_new() {
         "CREATE TABLE IF NOT EXISTS songs ("
         "song_id INTEGER PRIMARY KEY,"
         "album_id INTEGER NOT NULL,"
+        "artist TEXT NOT NULL,"
         "title TEXT NOT NULL,"
         "track_num INTEGER,"
+        "disc_num INTEGER,"
         "dur_s INTEGER,"
         "bitrate INTEGER,"
         "sample_rate INTEGER,"
         "channels INTEGER,"
         "comment TEXT,"
         "path TEXT NOT NULL UNIQUE,"
+        "found BOOL,"
         "FOREIGN KEY (album_id) REFERENCES albums(album_id)"
         ");";
     rc = sqlite3_exec(l_db->db, sql_str, 0, 0, &err_msg);
@@ -137,9 +140,9 @@ lib_db* lib_db_new() {
         return NULL;
 }
 
-int insert_artist(lib_db* lib_db, char* artist_name) {
+int insert_alb_artist(lib_db* lib_db, char* alb_artist_name) {
     sqlite3_stmt* stmt = lib_db->insert_artist;
-    sqlite3_bind_text(stmt, 1, artist_name, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 1, alb_artist_name, -1, SQLITE_TRANSIENT);
     int rc = sqlite3_step(stmt);
 
     sqlite3_reset(stmt);
@@ -148,11 +151,11 @@ int insert_artist(lib_db* lib_db, char* artist_name) {
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
 
-int retrieve_artist(lib_db* lib_db, char* artist_name) {
+int retrieve_alb_artist(lib_db* lib_db, char* alb_artist_name) {
     JHASHMAP* cache = lib_db->artist_cache;
 
-    int artist_id = (int)(intptr_t)JHASHMAP_get(cache, artist_name);
-    if (artist_id > 0) {
+    int alb_artist_id = (int)(intptr_t)JHASHMAP_get(cache, alb_artist_name);
+    if (alb_artist_id > 0) {
         return artist_id;
     }
     //not in cache, need to query db for key

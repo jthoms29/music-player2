@@ -60,7 +60,7 @@ void audio_free(audio_player** ap_ptr) {
 int audio_load_song(audio_player* ap, song* sng) {
     ma_result res;
 
-    // if song was initialized before this, get rid of it
+    // if song is currently playing, stop it
     if (ma_sound_is_playing(&ap->sound) || ma_sound_at_end(&ap->sound)) {
         ma_sound_uninit(&ap->sound);
     }
@@ -91,12 +91,21 @@ int audio_pause(audio_player* ap) {
     return 0;
 }
 
-double audio_current_pos(audio_player* ap) {
+long audio_current_pos(audio_player* ap) {
     // song is not currently playing
     if (!ma_sound_is_playing(&ap->sound)) {
         return 0;
     }
 
-    float pos = ma_sound_get_cursor_in_seconds(&ap->sound, &pos);
-    return (double) pos;
+    float pos;
+    ma_sound_get_cursor_in_seconds(&ap->sound, &pos);
+    return (long) pos;
+}
+
+int audio_fwd(audio_player* ap) {
+
+}
+
+int audio_rev(audio_player* ap) {
+
 }

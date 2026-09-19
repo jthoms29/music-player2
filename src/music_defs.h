@@ -6,6 +6,7 @@
 typedef struct song {
     int song_id;
     int album_id;
+    int disc_num;
     int track_num;
     int dur_s;
     int bitrate;
@@ -14,17 +15,20 @@ typedef struct song {
     char* title;
     char* path;
     char* comment;
+    char* artist_name;
 
     // not allocated within song init function
-    char* artist_name;
+    char* abm_artist_name;
     char* album_title;
     char* date;
     char* orig_date;
+
+    char* string_rep;
 } song;
 
 typedef struct album {
     int album_id;
-    int artist_id;
+    int abm_artist_id;
     int tracks;
 
     char* title;
@@ -35,6 +39,8 @@ typedef struct album {
 
     // not allocated within album init function
     char* artist_name;
+
+    char* string_rep;
 } album;
 
 typedef struct artist {

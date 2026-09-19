@@ -48,16 +48,22 @@ void main_loop(lib_mem* lib) {
         draw_ret = draw_screen(e);
         // get input
 
-        int pollret = poll(fds, 2, 1000000000);
+        int pollret = poll(fds, 2, 250);
 
-        // poll doesn't like resize, ignore EINTR
-        if (pollret < 0 && errno != EINTR) {
+        if (pollret < 0) {
+            // poll doesn't like resize, ignore EINTR
+            if (errno == EINTR) {
+                goto possible_resize;
+            }
             perror("poll");
             break;
         }
 
         //timeout, update progress bar if applicable
         if (pollret == 0) {
+            if (!audio_is_playing(player)) { continue; }
+            e->playback_menu->elapsed_s = audio_current_pos(player);
+            draw_screen(e);
         }
         if (fds[1].revents & POLLIN) {
             uint8_t signal;
@@ -68,6 +74,7 @@ void main_loop(lib_mem* lib) {
         }
 
         if (fds[0].revents & POLLIN) {
+            possible_resize:
             ch = getch();
             switch(ch) {
                 case KEY_RESIZE:
@@ -139,7 +146,7 @@ int main(int argc, char** argv) {
     //scan_dir(&lib_db, argv[1]);
 
     lib_mem* mem = lib_mem_new();
-    scan_dir(lib_db, argv[1]);
+    //scan_dir(lib_db, argv[1]);
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
         printf("failed\n");

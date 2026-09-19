@@ -15,6 +15,11 @@ char* album_string(void* abm) {
         return NULL;
     }
     album* _abm = (album*) abm;
+    char* od = _abm->orig_date;
+    char* d = _abm->date;
+    char* title = _abm->date;
+
+
     return _abm->title;
 }
 
