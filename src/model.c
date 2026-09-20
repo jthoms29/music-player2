@@ -6,8 +6,8 @@ char* artist_string(void* atst) {
     if (!atst) {
         return NULL;
     }
-    artist* _atst = (artist*) atst;
-    return _atst->name;
+    abm_artist* _abm_atst = (abm_artist*) atst;
+    return _abm_atst->name;
 }
 
 char* album_string(void* abm) {
@@ -27,8 +27,15 @@ char* song_string(void* sng) {
     if (!sng) {
         return NULL;
     }
+
     song* _sng = (song*) sng;
-    return _sng->title;
+    if (!_sng->str_rep) {
+        char buf[256];
+        size_t len = snprintf(buf, sizeof(buf), "%02d-%02d - %s", _sng->disc_num, _sng->track_num, _sng->title);
+        _sng->str_rep = calloc(len+1, 1);
+        strcpy(_sng->str_rep, buf);
+    }
+    return _sng->str_rep;
 }
 
 elements* elements_new(lib_mem* lib) {
@@ -45,8 +52,8 @@ elements* elements_new(lib_mem* lib) {
         return NULL;
     }
     e->menus = menus;
-    e->menus[0] = menu_new(lib->artists, artist_string);
-    e->menus[1] = menu_new(((artist*)JVEC_get(e->menus[0]->vec, 0))->albums, album_string);
+    e->menus[0] = menu_new(lib->abm_artists, artist_string);
+    e->menus[1] = menu_new(((abm_artist*)JVEC_get(e->menus[0]->vec, 0))->albums, album_string);
     e->menus[2] = menu_new(((album*)JVEC_get(e->menus[1]->vec, 0))->songs, song_string);
     menu_focus(e->menus[0]);
 

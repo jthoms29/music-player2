@@ -17,25 +17,24 @@ lib_db* lib_db_new() {
     }
 
     const char* sql_str =
-        "CREATE TABLE IF NOT EXISTS artists ("
-        "artist_id INTEGER PRIMARY KEY,"
+        "CREATE TABLE IF NOT EXISTS abm_artists ("
+        "abm_artist_id INTEGER PRIMARY KEY,"
         "name TEXT NOT NULL UNIQUE"
         ");"
 
         "CREATE TABLE IF NOT EXISTS albums ("
         "album_id INTEGER PRIMARY KEY,"
-        "alb_artist_id INTEGER NOT NULL,"
+        "abm_artist_id INTEGER NOT NULL,"
         "title TEXT NOT NULL,"
         "date TEXT NOT NULL,"
         "orig_date TEXT NOT NULL,"
-        "FOREIGN KEY (artist_id) REFERENCES artists(artist_id),"
-        "UNIQUE(artist_id, title, date)"
+        "FOREIGN KEY (abm_artist_id) REFERENCES abm_artists(abm_artist_id),"
+        "UNIQUE(abm_artist_id, title, date)"
         ");"
 
         "CREATE TABLE IF NOT EXISTS songs ("
         "song_id INTEGER PRIMARY KEY,"
         "album_id INTEGER NOT NULL,"
-        "artist TEXT NOT NULL,"
         "title TEXT NOT NULL,"
         "track_num INTEGER,"
         "disc_num INTEGER,"
@@ -56,12 +55,12 @@ lib_db* lib_db_new() {
 
     //prepare all query strings ///////////////////////
 
-    //INSERT ARTIST
+    //INSERT ALBUM ARTIST
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO artists(name) VALUES(?);", 
+        "INSERT OR IGNORE INTO abm_artists(name) VALUES(?);", 
         -1, 
-        &l_db->insert_artist, 
+        &l_db->insert_abm_artist, 
         NULL
     );
     if (rc != SQLITE_OK) {
@@ -72,9 +71,9 @@ lib_db* lib_db_new() {
     // RETRIEVE ARTIST
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "SELECT artist_id FROM artists WHERE name = ?;",
+        "SELECT abm_artist_id FROM abm_artists WHERE name = ?;",
         -1, 
-        &l_db->select_artist, 
+        &l_db->select_abm_artist, 
         NULL
     );
     if (rc != SQLITE_OK) {
@@ -85,7 +84,7 @@ lib_db* lib_db_new() {
     //INSERT ALBUM
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO albums(artist_id, title, date, orig_date) VALUES(?, ?, ?, ?);", 
+        "INSERT OR IGNORE INTO albums(abm_artist_id, title, date, orig_date) VALUES(?, ?, ?, ?);", 
         -1, 
         &l_db->insert_album, 
         NULL
@@ -98,7 +97,7 @@ lib_db* lib_db_new() {
     // RETRIEVE ALBUM
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "SELECT album_id FROM albums WHERE artist_id = ? and title = ? and date = ?;",
+        "SELECT album_id FROM albums WHERE abm_artist_id = ? and title = ? and date = ?;",
         -1, 
         &l_db->select_album, 
         NULL
@@ -124,14 +123,14 @@ lib_db* lib_db_new() {
 
     //set up primary key caches
     JHASHMAP* artist_cache = JHASHMAP_new(string_hash, string_compare);
-    l_db->artist_cache = artist_cache;
+    l_db->abm_artist_cache = artist_cache;
     JHASHMAP* album_cache = JHASHMAP_new(string_hash, string_compare);
     l_db->album_cache = album_cache;
     return l_db;
 
     uh_oh:
-        sqlite3_finalize(l_db->insert_artist);
-        sqlite3_finalize(l_db->select_artist);
+        sqlite3_finalize(l_db->insert_abm_artist);
+        sqlite3_finalize(l_db->select_abm_artist);
         sqlite3_finalize(l_db->insert_album);
         sqlite3_finalize(l_db->select_album);
         sqlite3_finalize(l_db->insert_song);
@@ -140,9 +139,9 @@ lib_db* lib_db_new() {
         return NULL;
 }
 
-int insert_alb_artist(lib_db* lib_db, char* alb_artist_name) {
-    sqlite3_stmt* stmt = lib_db->insert_artist;
-    sqlite3_bind_text(stmt, 1, alb_artist_name, -1, SQLITE_TRANSIENT);
+int insert_abm_artist(lib_db* lib_db, char* abm_artist_name) {
+    sqlite3_stmt* stmt = lib_db->insert_abm_artist;
+    sqlite3_bind_text(stmt, 1, abm_artist_name, -1, SQLITE_TRANSIENT);
     int rc = sqlite3_step(stmt);
 
     sqlite3_reset(stmt);
@@ -151,34 +150,35 @@ int insert_alb_artist(lib_db* lib_db, char* alb_artist_name) {
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
 
-int retrieve_alb_artist(lib_db* lib_db, char* alb_artist_name) {
-    JHASHMAP* cache = lib_db->artist_cache;
+int retrieve_abm_artist(lib_db* lib_db, char* abm_artist_name) {
+    JHASHMAP* cache = lib_db->abm_artist_cache;
 
-    int alb_artist_id = (int)(intptr_t)JHASHMAP_get(cache, alb_artist_name);
-    if (alb_artist_id > 0) {
-        return artist_id;
+    int abm_artist_id = (int)(intptr_t)JHASHMAP_get(cache, abm_artist_name);
+    if (abm_artist_id > 0) {
+        return abm_artist_id;
     }
     //not in cache, need to query db for key
-    sqlite3_stmt* stmt = lib_db->select_artist;
-    sqlite3_bind_text(stmt, 1, artist_name, -1, SQLITE_TRANSIENT);
+    sqlite3_stmt* stmt = lib_db->select_abm_artist;
+    sqlite3_bind_text(stmt, 1, abm_artist_name, -1, SQLITE_TRANSIENT);
     
-    artist_id = -1;
+    abm_artist_id = -1;
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        artist_id = sqlite3_column_int(stmt, 0);
-        char* name = malloc(strlen(artist_name)+1);
-        JHASHMAP_add(cache, name, (void*)(intptr_t) artist_id);
+        abm_artist_id = sqlite3_column_int(stmt, 0);
+        char* name = malloc(strlen(abm_artist_name)+1);
+        strcpy(name, abm_artist_name);
+        JHASHMAP_add(cache, name, (void*)(intptr_t) abm_artist_id);
     }
 
     sqlite3_reset(stmt);
     sqlite3_clear_bindings(stmt);
 
-    return artist_id;
+    return abm_artist_id;
 }
 
-int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date) {
+int insert_album(lib_db* lib_db, int abm_artist_id, char* title, char* date, char* orig_date) {
 
     sqlite3_stmt* stmt = lib_db->insert_album;
-    sqlite3_bind_int(stmt, 1, artist_id);
+    sqlite3_bind_int(stmt, 1, abm_artist_id);
     sqlite3_bind_text(stmt, 2, title, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, date, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 4, orig_date, -1, SQLITE_TRANSIENT);
@@ -190,18 +190,18 @@ int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* o
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
 
-int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date) {
+int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* date) {
     // need to build cache key with more info than just album title
     char local_key[512];
     JHASHMAP* cache = lib_db->album_cache;
-    snprintf(local_key, 512, "%d|%s|%s", artist_id, album_name, date);
+    snprintf(local_key, 512, "%d|%s|%s", abm_artist_id, album_name, date);
     int album_id = (int)(intptr_t)JHASHMAP_get(cache, local_key);
     if (album_id > 0) {
         return album_id;
     }
     //not in cache, need to query db for key
     sqlite3_stmt* stmt = lib_db->select_album;
-    sqlite3_bind_int(stmt, 1, artist_id);
+    sqlite3_bind_int(stmt, 1, abm_artist_id);
     sqlite3_bind_text(stmt, 2, album_name, -1, SQLITE_TRANSIENT);
     sqlite3_bind_text(stmt, 3, date, -1, SQLITE_TRANSIENT);
     
@@ -243,17 +243,17 @@ int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, in
 void lib_db_free(lib_db** lib_db_ptr) {
     lib_db* l_db = *lib_db_ptr;
     // free all prepared statements
-    sqlite3_finalize(l_db->insert_artist);
-    sqlite3_finalize(l_db->select_artist);
+    sqlite3_finalize(l_db->insert_abm_artist);
+    sqlite3_finalize(l_db->select_abm_artist);
     sqlite3_finalize(l_db->insert_album);
     sqlite3_finalize(l_db->select_album);
     sqlite3_finalize(l_db->insert_song);
     sqlite3_close(l_db->db);
 
     // free primary key caches
-    JHASHMAP_free(&l_db->artist_cache);
+    JHASHMAP_free(&l_db->abm_artist_cache);
     JHASHMAP_free(&l_db->album_cache);
 
     free(l_db);
-    l_db = NULL;
+    *lib_db_ptr = NULL;
 }

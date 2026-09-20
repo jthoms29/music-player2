@@ -3,7 +3,8 @@
 #include <ncurses.h>
 #include <assert.h>
 
-
+#define MIN_ROWS 15
+#define MIN_COLS 9
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
     werase(w);

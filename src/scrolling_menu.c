@@ -1,6 +1,9 @@
 #include <ncurses.h>
 #include <scrolling_menu.h>
 #include <assert.h>
+#include <music_defs.h>
+
+
 
 scrolling_menu* menu_new(JVEC* vec, char* (*str_func)(void*)) {
     scrolling_menu* m = calloc(1, sizeof(*m));

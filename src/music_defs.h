@@ -23,7 +23,7 @@ typedef struct song {
     char* date;
     char* orig_date;
 
-    char* string_rep;
+    char* str_rep;
 } song;
 
 typedef struct album {
@@ -38,14 +38,14 @@ typedef struct album {
     JVEC* songs;
 
     // not allocated within album init function
-    char* artist_name;
+    char* abm_artist_name;
 
     char* string_rep;
 } album;
 
-typedef struct artist {
+typedef struct abm_artist {
     char* name;
     JVEC* albums;
-} artist;
+} abm_artist;
 
 #endif

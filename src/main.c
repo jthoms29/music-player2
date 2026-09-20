@@ -126,7 +126,7 @@ void main_loop(lib_mem* lib) {
             if (scrolled) {
 
                 if (e->col_idx == 0) {
-                    JVEC* albums_vec = ((artist*) menu_get_selected(e->menus[0]))->albums;
+                    JVEC* albums_vec = ((abm_artist*) menu_get_selected(e->menus[0]))->albums;
                     menu_change_vec(e->menus[1], albums_vec);
                 }
                 if (e->col_idx < 2) {
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
     //scan_dir(&lib_db, argv[1]);
 
     lib_mem* mem = lib_mem_new();
-    //scan_dir(lib_db, argv[1]);
+    scan_dir(lib_db, argv[1]);
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
         printf("failed\n");

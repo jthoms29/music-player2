@@ -41,11 +41,11 @@ int read_tags(lib_db* lib_db, char* path) {
     vals2 = taglib_property_get(file, "DATE");
     char* date = (vals2) ? vals2[0] : "unknown";
     vals3 = taglib_property_get(file, "ALBUMARTIST");
-    char* alb_artist = (vals3) ? vals2[0] : "unknown";
+    char* abm_artist = (vals3) ? vals3[0] : "unknown";
 
 
-    insert_artist(lib_db, artist);
-    int artist_id = retrieve_artist(lib_db, alb_artist);
+    insert_abm_artist(lib_db, abm_artist);
+    int artist_id = retrieve_abm_artist(lib_db, abm_artist);
 
     insert_album(lib_db, artist_id, album, date, orig_date);
     int album_id = retrieve_album(lib_db, artist_id, album, date);

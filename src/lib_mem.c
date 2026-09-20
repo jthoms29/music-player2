@@ -1,17 +1,18 @@
 #include <music_player2.h>
 #include <assert.h>
+#include <stdatomic.h>
 #include <stdio.h>
 
-int artist_compare(const void* a1, const void* a2);
+int abm_artist_compare(const void* a1, const void* a2);
 int album_compare(const void* a1, const void* a2);
 int song_compare(const void* s1, const void* s2);
 
-void free_artist(artist* atst) {
-    if (atst->name) {
-        free(atst->name);
+void free_abm_artist(abm_artist* abm_atst) {
+    if (abm_atst->name) {
+        free(abm_atst->name);
     }
-    if (atst->albums) {
-        JVEC_free(&(atst->albums));
+    if (abm_atst->albums) {
+        JVEC_free(&(abm_atst->albums));
     }
 }
 
@@ -46,6 +47,9 @@ void free_song(song* sng) {
     if (sng->orig_date) {
         free(sng->orig_date);
     }
+    if (sng->str_rep) {
+        free(sng->str_rep);
+    }
 }
 
 void lib_mem_free(lib_mem** lib_ptr) {
@@ -53,8 +57,8 @@ void lib_mem_free(lib_mem** lib_ptr) {
         return;
     }
 
-    if ((*lib_ptr)->artists) {
-        JVEC_free(&(*lib_ptr)->artists); // :-)
+    if ((*lib_ptr)->abm_artists) {
+        JVEC_free(&(*lib_ptr)->abm_artists); // :-)
     }
     if ((*lib_ptr)->albums) {
         JVEC_free(&(*lib_ptr)->albums); 
@@ -74,10 +78,10 @@ lib_mem* lib_mem_new(void) {
         return NULL;
     }
 
-    // artists vec
-    lib->artists = JVEC_new(NULL, artist_compare);
-    if (!lib->artists) {
-        fprintf(stderr, "Failed to create artists vector\n");
+    // abm_artists vec
+    lib->abm_artists = JVEC_new(NULL, abm_artist_compare);
+    if (!lib->abm_artists) {
+        fprintf(stderr, "Failed to create abm_artists vector\n");
         goto uh_oh;
     }
 
@@ -96,9 +100,9 @@ lib_mem* lib_mem_new(void) {
     }
 
 
-    lib->artist_cache = JHASHMAP_new(int_hash, int_compare);
-    if (!lib->artist_cache) {
-        fprintf(stderr, "Failed to create artist cache\n");
+    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare);
+    if (!lib->abm_artist_cache) {
+        fprintf(stderr, "Failed to create abm_artist cache\n");
         goto uh_oh;
     }
 
@@ -115,12 +119,12 @@ lib_mem* lib_mem_new(void) {
     return NULL;
 }
 
-int load_artists(lib_mem* mem, lib_db* db) {
-    JVEC* vec = mem->artists;
-    JHASHMAP* cache = mem->artist_cache;
+int load_abm_artists(lib_mem* mem, lib_db* db) {
+    JVEC* vec = mem->abm_artists;
+    JHASHMAP* cache = mem->abm_artist_cache;
 
     sqlite3_stmt* pstmt;
-    char* sql = "SELECT artist_id, name from artists;";
+    char* sql = "SELECT abm_artist_id, name from abm_artists;";
 
     char* name;
     int id;
@@ -128,53 +132,53 @@ int load_artists(lib_mem* mem, lib_db* db) {
     sqlite3* database = db->db;
     int rc = sqlite3_prepare_v2(database, sql, -1, &pstmt, NULL);
     if (rc != SQLITE_OK) {
-        fprintf(stderr, "Failed to load artists %s\n", sqlite3_errmsg(database));
+        fprintf(stderr, "Failed to load abm_artists %s\n", sqlite3_errmsg(database));
         return -1;
     }
 
 
-    artist* atst;
+    abm_artist* abm_atst;
     while(sqlite3_step(pstmt) == SQLITE_ROW) {
         id = sqlite3_column_int(pstmt, 0);
         name = (char*) sqlite3_column_text(pstmt, 1);
 
-        atst = calloc(1, sizeof(*atst));
-        if (!atst) {
-            perror("load_artists(): failed to alloc artist struct");
+        abm_atst = calloc(1, sizeof(*abm_atst));
+        if (!abm_atst) {
+            perror("load_artists(): failed to alloc abm_artist struct");
             goto uh_oh;
         }
 
-        // create an album vector for this artist
+        // create an album vector for this abm_artist
         JVEC* albums = JVEC_new(NULL, album_compare);
         if (!albums) {
             fprintf(stderr, "Failed to create album vector for %s\n", name);
             goto uh_oh;
         }
-        atst->albums = albums;
+        abm_atst->albums = albums;
 
-        // space for artist's name from sql ret
+        // space for abm_artist's name from sql ret
         char* name_alloc = malloc(strlen(name) + 1);
         if (!name_alloc) {
-            perror("load_artists(): failed to allocate space for artist name");
+            perror("load_artists(): failed to allocate space for abm_artist name");
             goto uh_oh;
         }
         strcpy(name_alloc, name);
-        atst->name = name_alloc;
+        abm_atst->name = name_alloc;
 
-        JVEC_append(vec, atst);
+        JVEC_append(vec, abm_atst);
 
-        // add to temporary cache indexed by sql key. Allows albums to be associated with artist efficiently
-        JHASHMAP_add(cache, CAST_INT(id), atst);
+        // add to temporary cache indexed by sql key. Allows albums to be associated with abm_artist efficiently
+        JHASHMAP_add(cache, CAST_INT(id), abm_atst);
     }
 
-    // put all artists in alphabetical order
+    // put all abm_artists in alphabetical order
     JVEC_sort(vec);
 
     return 0;
 
     uh_oh:
-    // free current artist that caused error
-    free_artist(atst);
+    // free current abm_artist that caused error
+    free_abm_artist(abm_atst);
     return 1;
 }
 
@@ -182,12 +186,12 @@ void print_album(album* abm);
 int load_albums(lib_mem* mem, lib_db* db) {
     JVEC* vec = mem->albums;
 
-    JHASHMAP* artist_cache = mem->artist_cache;
+    JHASHMAP* abm_artist_cache = mem->abm_artist_cache;
     JHASHMAP* album_cache = mem->album_cache;
 
 
     sqlite3_stmt* pstmt;
-    char* sql = "SELECT album_id, artist_id, title, date, orig_date from albums;";
+    char* sql = "SELECT album_id, abm_artist_id, title, date, orig_date from albums;";
 
     // from sql ret
     char* text;
@@ -253,20 +257,20 @@ int load_albums(lib_mem* mem, lib_db* db) {
         int album_id = sqlite3_column_int(pstmt, 0);
         abm->album_id = album_id;
 
-        // artist id 
-        int artist_id = sqlite3_column_int(pstmt, 1);
-        abm->artist_id = artist_id;
+        // abm_artist id 
+        int abm_artist_id = sqlite3_column_int(pstmt, 1);
+        abm->abm_artist_id = abm_artist_id;
 
 
-        // also need extra info from artist
-        artist* atst = JHASHMAP_get(artist_cache, CAST_INT(artist_id));
-        assert(atst);
-        abm->artist_name = atst->name;
+        // also need extra info from abm_artist
+        abm_artist* abm_atst = JHASHMAP_get(abm_artist_cache, CAST_INT(abm_artist_id));
+        assert(abm_atst);
+        abm->abm_artist_name = abm_atst->name;
 
         // add to general albums vector
         JVEC_append(vec, abm);
-        // add to artist's album vector
-        JVEC_append(atst->albums, abm);
+        // add to abm_artist's album vector
+        JVEC_append(abm_atst->albums, abm);
         // also need to add album to temp album cache. Allows songs to efficiently be associated with album
         JHASHMAP_add(album_cache, CAST_INT(album_id), abm);
         
@@ -276,12 +280,12 @@ int load_albums(lib_mem* mem, lib_db* db) {
     // sort full album vector
     JVEC_sort(vec);
 
-    // now within each artist the albums must be sorted
-    JVEC* artists = mem->artists;
-    size_t len = JVEC_len(artists);
+    // now within each abm_artist the albums must be sorted
+    JVEC* abm_artists = mem->abm_artists;
+    size_t len = JVEC_len(abm_artists);
     for (size_t i = 0; i < len; i++) {
-        artist* atst = JVEC_get(artists, i);
-        JVEC_sort(atst->albums);
+        abm_artist* abm_atst = JVEC_get(abm_artists, i);
+        JVEC_sort(abm_atst->albums);
     }
 
     return 0;
@@ -367,7 +371,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
         // extra info associated with song, strings not allocated here so DON'T FREE WHEN FREEING SONG
         sng->album_title = abm->title;
-        sng->artist_name = abm->artist_name;
+        sng->abm_artist_name = abm->abm_artist_name;
         sng->date =  abm->date;
         sng->orig_date = abm->date;
 
@@ -399,8 +403,8 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
 // load persistent library stored in sql database into memory
 int load_library(lib_mem* mem, lib_db* db) {
-    if (load_artists(mem, db)) {
-        fprintf(stderr, "failed to load artists in load_library()\n");
+    if (load_abm_artists(mem, db)) {
+        fprintf(stderr, "failed to load abm_artists in load_library()\n");
         return 1;
     }
     if (load_albums(mem, db)) {
@@ -416,17 +420,17 @@ int load_library(lib_mem* mem, lib_db* db) {
 }
 
 void debug_print_mem(lib_mem* mem) {
-    JVEC* artists = mem->artists;
+    JVEC* abm_artists = mem->abm_artists;
     //JVEC* albums = mem->albums;
     //JVEC* songs = mem->songs;
 
     printf("ARTISTS:\n");
-    for (size_t i = 0; i < JVEC_len(artists); i++) {
-        artist* atst = JVEC_get(artists, i);
-        printf("%s\n", atst->name);
-        printf("  artist's albums:\n");
+    for (size_t i = 0; i < JVEC_len(abm_artists); i++) {
+        abm_artist* abm_atst = JVEC_get(abm_artists, i);
+        printf("%s\n", abm_atst->name);
+        printf("  abm_artist's albums:\n");
 
-        JVEC* a_albums = atst->albums;
+        JVEC* a_albums = abm_atst->albums;
         for (size_t j = 0; j < JVEC_len(a_albums); j++) {
             album* a_abm = JVEC_get(a_albums, j);
             printf("    %s\n", a_abm->title);
@@ -441,15 +445,15 @@ void debug_print_mem(lib_mem* mem) {
 }
 
 void print_song(song* sng) {
-    printf("id: %d\nalbum_id: %d\ntrack num: %d\ndur_s: %d\nbitrate: %d\nsample rate: %d\nchannels: %d\ntitle: %s\npath: %s\ncomment: %s\nartist %s\ntitle: %s\ndate: %s\norig_date: %s\n", sng->song_id, sng->album_id, sng->track_num, sng->dur_s, sng->bitrate, sng->sample_rate, sng->channels, sng->title, sng->path, sng->comment, sng->artist_name, sng->album_title, sng->date, sng->orig_date);
+    printf("id: %d\nalbum_id: %d\ntrack num: %d\ndur_s: %d\nbitrate: %d\nsample rate: %d\nchannels: %d\ntitle: %s\npath: %s\ncomment: %s\nartist %s\ntitle: %s\ndate: %s\norig_date: %s\n", sng->song_id, sng->album_id, sng->track_num, sng->dur_s, sng->bitrate, sng->sample_rate, sng->channels, sng->title, sng->path, sng->comment, sng->abm_artist_name, sng->album_title, sng->date, sng->orig_date);
 }
 void print_album(album* abm) {
-    printf("id: %d\na_id: %d\ntracks: %d\ntitle: %s\ngenre: %s\ndate: %s\norig_date: %s\nartist: %s\n", abm->album_id, abm->artist_id, abm->tracks, abm->title, abm->genre, abm->date, abm->orig_date, abm->artist_name);
+    printf("id: %d\na_id: %d\ntracks: %d\ntitle: %s\ngenre: %s\ndate: %s\norig_date: %s\nartist: %s\n", abm->album_id, abm->abm_artist_id, abm->tracks, abm->title, abm->genre, abm->date, abm->orig_date, abm->abm_artist_name);
 }
 
-int artist_compare(const void* a1, const void* a2) {
-    artist* _a1 = *(artist**) a1;
-    artist* _a2 = *(artist**) a2;
+int abm_artist_compare(const void* a1, const void* a2) {
+    abm_artist* _a1 = *(abm_artist**) a1;
+    abm_artist* _a2 = *(abm_artist**) a2;
     return strcmp(_a1->name, _a2->name);
 }
 

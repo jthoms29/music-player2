@@ -12,8 +12,6 @@
 #include <playback_menu.h>
 #include <music_defs.h>
 
-#define MIN_ROWS 9
-#define MIN_COLS 15
 /* 
  * Contains a pointer to the sqlite database which contains the user's music library info,
  * as well as premade statements for interacting with the db.
@@ -21,15 +19,15 @@
 typedef struct lib_db {
     sqlite3* db;
 
-    // hashmaps containing the primary keys for each album and artist. Makes it so when building
+    // hashmaps containing the primary keys for each album-artist and alb-artist. Makes it so when building
     // db, don't need to retrieve these primary keys over and over when setting foreign keys.
     // keys are names/album titles, vals are sql primary keys
-    JHASHMAP* alb_artist_cache;
+    JHASHMAP* abm_artist_cache;
     JHASHMAP* album_cache;
 
     // sql statements for inserting and retrieving library elements
-    sqlite3_stmt* insert_alb_artist;
-    sqlite3_stmt* select_alb_artist;
+    sqlite3_stmt* insert_abm_artist;
+    sqlite3_stmt* select_abm_artist;
 
     sqlite3_stmt* insert_album;
     sqlite3_stmt* select_album;
@@ -41,25 +39,24 @@ typedef struct lib_db {
 
 
 typedef struct lib_mem {
-    JVEC* alb_artists;
+    JVEC* abm_artists;
     JVEC* albums;
     JVEC* songs;
 
     // allows structs to be nested efficiently when loading library. Key is sql primary key, vals are 
     // the wanted parent structs
-    JHASHMAP* alb_artist_cache;
+    JHASHMAP* abm_artist_cache;
     JHASHMAP* album_cache;
 
 } lib_mem;
 
 
 typedef struct elements {
-    // the three selection menu windows - artist/album/song
+    // the three selection menu windows - alb-artist/album/song
     scrolling_menu** menus;
     // currently selected window
     size_t col_idx;
     playback_menu* playback_menu;
-    song* selected_song;
 } elements;
 
 
@@ -68,13 +65,13 @@ typedef struct elements {
 /**
  * @brief Read tags from audio file, update sql database with song
  * @details Reads tags from an audio file using taglib, updates sqlite3 database within lib_db
- * with song, as well as associated album and artist
+ * with song, as well as associated album and album-artist
  * @note Database will only be updated if path refers to an audio file readable by taglib
  * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
  * @param[in] path string filepath
  * @pre lib_db must be initialized with lib_db_init()
  * @post if path refers to a valid audio file, the sqlite3 database within lib_db is updated, adding an entry to the songs table,
- * as well as adding or updating the tables for album artist and album associated with song
+ * as well as adding or updating the tables for album-artist and album associated with song
  * @return 0 on success, anything else on failure
  */
 int read_tags(lib_db* lib_db, char* path);
@@ -87,7 +84,7 @@ int read_tags(lib_db* lib_db, char* path);
  * @param[in] path string directory path
  * @pre lib_db must be created with `lib_db_new()`
  * @post if path refers to a directory containing valid audio files, the sqlite3 database within lib_db is updated,
- * adding entries to the song table, as well as adding entries to the the artist and album tables associated with the song
+ * adding entries to the song table, as well as adding entries to the the alb-artist and album tables associated with the song
  * @return 0 on success, anything else on failure
  */
 int scan_dir(lib_db* lib_db, char* path);
@@ -99,7 +96,7 @@ int scan_dir(lib_db* lib_db, char* path);
 /**
  * @brief Allocates and returns a new lib_db struct.
  * @details Allocates and returns a new lib_db struct, which contains:
- * - A reference to an sqlite3 database, containing tables for artists, albums, and songs. This is created in this function if it doesn't exist already
+ * - A reference to an sqlite3 database, containing tables for alb-artists, albums, and songs. This is created in this function if it doesn't exist already
  * - Multiple prepared sqlite3 statements for interacting with said database
  * @note The lib_db struct returned by this function must be freed with `lib_db_free()`
  * @pre None
@@ -109,59 +106,59 @@ int scan_dir(lib_db* lib_db, char* path);
 lib_db* lib_db_new();
 
 /**
- * @brief Inserts given artist name into sqlite3 artist table
- * @details Artist specified in artist_name is added to sqlite3 database contained in lib_db. If this artist is
+ * @brief Inserts given alb-artist name into sqlite3 alb-artist table
+ * @details alb-artist specified in alb-artist_name is added to sqlite3 database contained in lib_db. If this alb-artist is
  * already present, nothing happens
  * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
- * @param[in] artist_name string referring to the name of an artist
+ * @param[in] abm_artist_name string referring to the name of an album-artist
  * @pre lib_db must be created with `lib_db_new()`
- * @post Artist referred to by artist_name is added to database's 'artists' table if not already present 
+ * @post alb-artist referred to by abm_artist_name is added to database's 'alb-artists' table if not already present 
  * @return 0 on success, anything else on failure
  */
-int insert_artist(lib_db* lib_db, char* artist_name);
+int insert_abm_artist(lib_db* lib_db, char* abm_artist_name);
 
 /**
- * @brief Retrieves artist_id primary key of artist referred to by 'artist_name'
- * @details Retrieves artist_id primary key of artist referred to by 'artist_name'. Retrieved from 'artists' table contained in
+ * @brief Retrieves alb-artist_id primary key of album-artist referred to by 'alb-artist_name'
+ * @details Retrieves alb-artist_id primary key of alb-artist referred to by 'alb-artist_name'. Retrieved from 'alb-artists' table contained in
  * lib_db's sqlite3 database
  * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
- * @param[in] artist_name string referring to the name of an artist
+ * @param[in] abm_artist_name string referring to the name of an alb-artist
  * @pre lib_db must be created with `lib_db_new()`
- * @post primary key associated with artist returned
- * @return artist primary key if present in database, -1 otherwise
+ * @post primary key associated with alb-artist returned
+ * @return alb-artist primary key if present in database, -1 otherwise
  */
-int retrieve_artist(lib_db* lib_db, char* artist_name);
+int retrieve_abm_artist(lib_db* lib_db, char* abm_artist_name);
 
 /**
  * @brief Inserts given album into sqlite3 album table
  * @details album specified in `title` is added to sqlite3 database contained in lib_db. 'date' and 'orig_date' tags
- * associated with album also inserted, as well as 'artist_id' foreign key - associated primary key in 'artists' table
+ * associated with album also inserted, as well as 'alb-artist_id' foreign key - associated primary key in 'alb-artists' table
  * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
- * @param[in] artist_id primary key for artist associated with album from database's 'artists' table
+ * @param[in] abm_artist_id primary key for alb-artist associated with album from database's 'alb-artists' table
  * @param[in] title album title
  * @param[in] date album's 'date' tag
  * @param[in] orig_date album's 'orginal_date' tag
  * @pre lib_db must be created with `lib_db_new()`
- * artist associated with album must already be present in database's 'artist' table
- * artist_id must be the primary key associated with the album artist
+ * alb-artist associated with album must already be present in database's 'alb-artists' table
+ * alb-artist_id must be the primary key associated with the album alb-artist
  * @post album is added to database's 'albums' table
  * @return 0 on success, anything else on failure
  */
-int insert_album(lib_db* lib_db, int artist_id, char* title, char* date, char* orig_date);
+int insert_album(lib_db* lib_db, int abm_artist_id, char* title, char* date, char* orig_date);
 
 /**
  * @brief Retrieves album_id primary key or album referred to by 'album_name'
- * @details Retrieves album_id primary key or album referred to by 'album_name' by artist referred to by 'artist_id'
+ * @details Retrieves album_id primary key or album referred to by 'album_name' by alb-artist referred to by 'alb-artist_id'
  * with date tag 'date'. 
  * @param[in] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
- * @param[in] artist_id primary key for artist associated with album from database's 'artists' table
+ * @param[in] abm_artist_id primary key for alb-artist associated with album from database's 'alb-artists' table
  * @param[in] album_name album title
  * @param[in] date album's 'date' tag
  * @pre lib_db must be created with `lib_db_new()`
  * @post if album exists in database, its primary key is returned
  * @return album's primary key on success, -1 on failure
  */
-int retrieve_album(lib_db* lib_db, int artist_id, char* album_name, char* date);
+int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* date);
 
 /**
  * @brief Inserts given song into sqlite3 songs table
@@ -200,7 +197,7 @@ void lib_db_free(lib_db** lib_db_ptr);
 /**
  * @brief Creates data structure to hold all database info in memory
  * @details Creates a struct containing multiple vectors which hold all database info.
- * Separate vectors for artists, albums, songs. Nested structure, artist also contains references to associated albums,
+ * Separate vectors for alb-artists, albums, songs. Nested structure, alb-artist also contains references to associated albums,
  * albums contain references to associated songs
  * @note Must be freed with `lib_mem_free()`
  * @pre None
@@ -210,8 +207,8 @@ void lib_db_free(lib_db** lib_db_ptr);
 lib_mem* lib_mem_new(void);
 
 /**
- * @brief Load all info from artists table into memory
- * @details Load all info from artists table from sqlite3 database in `db` into artists vector in `mem`
+ * @brief Load all info from alb-artists table into memory
+ * @details Load all info from alb-artists table from sqlite3 database in `db` into alb-artists vector in `mem`
  * @param[in, out]
  * @param[in]
  * @pre `mem` must be created with `lib_mem_new, `db` must be created with `lib_db_new`
