@@ -2,8 +2,8 @@
 #include <playback_menu.h>
 #include <assert.h>
 
-#define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
-#define DRAW_UNFILLED(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(4))
+#define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(3))
+#define DRAW_UNFILLED(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(1))
 playback_menu* playback_new() {
 
     playback_menu* pb = calloc(1, sizeof(*pb));

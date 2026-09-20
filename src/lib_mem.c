@@ -32,6 +32,9 @@ void free_album(album* abm) {
     if (abm->songs) {
         JVEC_free(&(abm->songs));
     }
+    if (abm->str_rep) {
+        free(abm->str_rep);
+    }
 }
 
 void free_song(song* sng) {
@@ -463,7 +466,9 @@ int album_compare(const void* a1, const void* a2) {
     album* _a2 = *(album**) a2;
 
 
-    return strcmp(_a1->orig_date, _a2->orig_date);
+    int og_comp = strcmp(_a1->orig_date, _a2->orig_date);
+    if (og_comp) { return og_comp; }
+    return strcmp(_a1->date, _a2->date);
 }
 
 int song_compare(const void* s1, const void* s2) {

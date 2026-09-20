@@ -15,12 +15,14 @@ char* album_string(void* abm) {
         return NULL;
     }
     album* _abm = (album*) abm;
-    char* od = _abm->orig_date;
-    char* d = _abm->date;
-    char* title = _abm->date;
+    if (!_abm->str_rep) {
+        char buf[256];
+        size_t len = snprintf(buf, sizeof(buf), "(%s) %s [%s]", _abm->orig_date, _abm->title, _abm->date);
+        _abm->str_rep = calloc(len+1, 1);
+        strcpy(_abm->str_rep, buf);
+    }
 
-
-    return _abm->title;
+    return _abm->str_rep;
 }
 
 char* song_string(void* sng) {

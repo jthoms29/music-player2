@@ -40,7 +40,7 @@ typedef struct album {
     // not allocated within album init function
     char* abm_artist_name;
 
-    char* string_rep;
+    char* str_rep;
 } album;
 
 typedef struct abm_artist {
