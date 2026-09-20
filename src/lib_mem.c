@@ -305,7 +305,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
     sqlite3_stmt* pstmt;
     char* sql = 
-    "SELECT song_id, album_id, track_num, dur_s, bitrate, sample_rate, channels, "
+    "SELECT song_id, album_id, disc_num, track_num, dur_s, bitrate, sample_rate, channels, "
     "title, path, comment from songs;";
     
     // for textual sql returns
@@ -328,7 +328,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
         }
        
         // title
-        text = (char*) sqlite3_column_text(pstmt, 7);
+        text = (char*) sqlite3_column_text(pstmt, 8);
         sng->title = malloc(strlen(text) + 1);
         if (!sng->title) {
             perror("load_songs(): failed to alloc space for song title");
@@ -337,7 +337,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
         strcpy(sng->title, text);
 
         // path
-        text = (char*) sqlite3_column_text(pstmt, 8);
+        text = (char*) sqlite3_column_text(pstmt, 9);
         sng->path = malloc(strlen(text) + 1);
         if (!sng->path) {
             perror("load_songs(): failed to alloc space for song path");
@@ -347,7 +347,7 @@ int load_songs(lib_mem* mem, lib_db* db) {
 
 
         // comment
-        text = (char*) sqlite3_column_text(pstmt, 9);
+        text = (char*) sqlite3_column_text(pstmt, 10);
         sng->comment = malloc(strlen(text) + 1);
         if (!sng->comment) {
             perror("load_songs(): failed to alloc space for song comment");
@@ -358,11 +358,12 @@ int load_songs(lib_mem* mem, lib_db* db) {
         // int fields
         sng->song_id = sqlite3_column_int(pstmt, 0);
         sng->album_id = sqlite3_column_int(pstmt, 1);
-        sng->track_num = sqlite3_column_int(pstmt, 2);
-        sng->dur_s = sqlite3_column_int(pstmt, 3);
-        sng->bitrate = sqlite3_column_int(pstmt, 4);
-        sng->sample_rate = sqlite3_column_int(pstmt, 5);
-        sng->channels = sqlite3_column_int(pstmt, 6);
+        sng->disc_num = sqlite3_column_int(pstmt, 2);
+        sng->track_num = sqlite3_column_int(pstmt, 3);
+        sng->dur_s = sqlite3_column_int(pstmt, 4);
+        sng->bitrate = sqlite3_column_int(pstmt, 5);
+        sng->sample_rate = sqlite3_column_int(pstmt, 6);
+        sng->channels = sqlite3_column_int(pstmt, 7);
 
 
         // also need to add to vector associated album
@@ -468,6 +469,9 @@ int album_compare(const void* a1, const void* a2) {
 int song_compare(const void* s1, const void* s2) {
     song* _s1 = *(song**) s1;
     song* _s2 = *(song**) s2;
+
+    int disc_comp = _s1->disc_num - _s2->disc_num;
+    if (disc_comp) { return disc_comp; }
 
     return _s1->track_num - _s2->track_num;
 }

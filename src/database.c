@@ -110,7 +110,7 @@ lib_db* lib_db_new() {
     // INSERT SONG
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO songs(album_id, title, track_num, dur_s, bitrate, sample_rate, channels, comment, path) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?);", 
+        "INSERT OR IGNORE INTO songs(album_id, title, disc_num, track_num, dur_s, bitrate, sample_rate, channels, comment, path) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", 
         -1, 
         &l_db->insert_song, 
         NULL
@@ -219,17 +219,18 @@ int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* da
     return album_id;
 }
 
-int insert_song(lib_db* lib_db, int album_id, char* song_title, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path) {
+int insert_song(lib_db* lib_db, int album_id, char* song_title, int discnum, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path) {
     sqlite3_stmt* stmt = lib_db->insert_song;
     sqlite3_bind_int(stmt, 1, album_id);
     sqlite3_bind_text(stmt, 2, song_title, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_int(stmt, 3, tracknum);
-    sqlite3_bind_int(stmt, 4, dur_s);
-    sqlite3_bind_int(stmt, 5, bitrate);
-    sqlite3_bind_int(stmt, 6, sample_rate);
-    sqlite3_bind_int(stmt, 7, channels);
-    sqlite3_bind_text(stmt, 8, comment, -1, SQLITE_TRANSIENT);
-    sqlite3_bind_text(stmt, 9, path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(stmt, 3, discnum);
+    sqlite3_bind_int(stmt, 4, tracknum);
+    sqlite3_bind_int(stmt, 5, dur_s);
+    sqlite3_bind_int(stmt, 6, bitrate);
+    sqlite3_bind_int(stmt, 7, sample_rate);
+    sqlite3_bind_int(stmt, 8, channels);
+    sqlite3_bind_text(stmt, 9, comment, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 10, path, -1, SQLITE_TRANSIENT);
 
     int rc = sqlite3_step(stmt);
 

@@ -35,13 +35,25 @@ int read_tags(lib_db* lib_db, char* path) {
     int channels = taglib_audioproperties_channels(properties);
    
 
-    char **vals1, **vals2, **vals3;
+    char **vals1, **vals2, **vals3, **vals4;
     vals1 = taglib_property_get(file, "ORIGINALDATE");
     char* orig_date = (vals1) ? vals1[0] : "unknown";
     vals2 = taglib_property_get(file, "DATE");
     char* date = (vals2) ? vals2[0] : "unknown";
     vals3 = taglib_property_get(file, "ALBUMARTIST");
     char* abm_artist = (vals3) ? vals3[0] : "unknown";
+
+    // disc number. If any error just put 0
+    vals4 = taglib_property_get(file, "DISCNUMBER");
+    int discnum = 0;
+    char *end;
+    if (vals4) {
+        long n = strtol(vals4[0], &end, 10);
+        if (*end == 0) {
+            discnum = (int)n;
+        }
+    }
+
 
 
     insert_abm_artist(lib_db, abm_artist);
@@ -50,7 +62,7 @@ int read_tags(lib_db* lib_db, char* path) {
     insert_album(lib_db, artist_id, album, date, orig_date);
     int album_id = retrieve_album(lib_db, artist_id, album, date);
 
-    insert_song(lib_db, album_id, title, tracknum, dur_s, bitrate, sample_rate, channels, comment, path);
+    insert_song(lib_db, album_id, title, discnum, tracknum, dur_s, bitrate, sample_rate, channels, comment, path);
 
     if (vals1) { taglib_property_free(vals1); }
     if (vals2) { taglib_property_free(vals2); }
