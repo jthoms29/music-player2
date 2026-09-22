@@ -68,8 +68,9 @@ void main_loop(lib_mem* lib) {
         if (fds[1].revents & POLLIN) {
             uint8_t signal;
             read(player->notify_read_fd, &signal, 1);
-            playback_next_song(e->playback_menu);
-            audio_load_song(player, e->playback_menu->cur_song);
+            if (playback_next_song(e->playback_menu)) {
+                audio_load_song(player, e->playback_menu->cur_song);
+            }
             continue;
         }
 
