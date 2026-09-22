@@ -165,6 +165,7 @@ int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* da
  * @details Song from specified path is added to sqlite3 database contained in lib_db. Associated tags as well as album_id foreign key inserted
  * @param[in, out] lib_db struct containing pointer to sqlite3 db, premade statements for db interaction
  * @param[in] album_id primary key for album associated with song from database's 'songs' table
+ * @param[in] artist_name name of song's artist
  * @param[in] song_title song's title
  * @param[in] discnum song's disc number within associated album
  * @param[in] tracknum song's track number within associated album
@@ -180,7 +181,7 @@ int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* da
  * @post song is added to database's 'songs' table
  * @return 0 on success, -1 on failure
  */
-int insert_song(lib_db* lib_db, int album_id, char* song_title, int discnum, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
+int insert_song(lib_db* lib_db, int album_id, char* artist_name, char* song_title, int discnum, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
 
 
 /**

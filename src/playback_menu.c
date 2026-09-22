@@ -87,8 +87,9 @@ void playback_draw(playback_menu *pb) {
 
 
     if (pb->cur_song) {
-        len = snprintf(buf, sizeof(buf), "%s: %s - %s", pb->cur_song->abm_artist_name, pb->cur_song->album_title, pb->cur_song->title);
-        mvwaddnstr(w, 1, bar_offset, buf, pb->wdt-2-bar_offset);
+        mvwaddnstr(w, 1, bar_offset, pb->cur_song->artist_name, pb->wdt-2-bar_offset);
+        len = snprintf(buf, sizeof(buf), "%s: %s", pb->cur_song->album_title, pb->cur_song->title);
+        mvwaddnstr(w, 2, bar_offset, buf, pb->wdt-2-bar_offset);
     }
 
 
