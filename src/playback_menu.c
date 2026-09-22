@@ -81,7 +81,17 @@ void playback_draw(playback_menu *pb) {
     int bar_offset = (pb->wdt - bar)/2;
     int filled_ratio = 0;
 
-    mvwprintw(w, 1, 1, "%ld/%ld\n", pb->elapsed_s, pb->time_s);
+    static char buf[256];
+    size_t len = snprintf(buf, sizeof(buf), "%.02ld:%.02ld / %.02ld:%.02ld", pb->elapsed_s/60, pb->elapsed_s%60, pb->time_s/60, pb->time_s%60);
+    mvwaddnstr(w, 4, bar_offset, buf, pb->wdt-2-bar_offset);
+
+
+    if (pb->cur_song) {
+        len = snprintf(buf, sizeof(buf), "%s: %s - %s", pb->cur_song->abm_artist_name, pb->cur_song->album_title, pb->cur_song->title);
+        mvwaddnstr(w, 1, bar_offset, buf, pb->wdt-2-bar_offset);
+    }
+
+
     if (pb->time_s != 0) {
         filled_ratio = bar * pb->elapsed_s / pb->time_s;
     }
