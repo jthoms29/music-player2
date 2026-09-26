@@ -235,6 +235,7 @@ elements* elements_new(lib_mem* lib);
 void view_init();
 
 
+void elements_update_vectors(elements* e);
 
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt);
 

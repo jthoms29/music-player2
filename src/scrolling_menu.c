@@ -94,6 +94,11 @@ int menu_draw(scrolling_menu* m, bool selected_override) {
     }
 
     // print vector elements currently visible within window
+    if (!vec) {
+        wnoutrefresh(w);
+        return 0;
+    }
+
     for (int i = 0; i < hgt-2; i++) {
         str = m->str_func(JVEC_get(vec, top+i));
         // if both element and window currently selected
@@ -138,7 +143,9 @@ void menu_unfocus(scrolling_menu* m) {
 }
 
 void* menu_get_hovered(scrolling_menu* m) {
-    assert(m->idx <= JVEC_len(m->vec));
+    if (!m->vec || !JVEC_len(m->vec)) {
+        return NULL;
+    }
     return JVEC_get(m->vec, m->idx);
 }
 

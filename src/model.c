@@ -2,7 +2,7 @@
 #include <scrolling_menu.h>
 #include <playback_menu.h>
 
-char* artist_string(void* atst) {
+char* abm_artist_string(void* atst) {
     if (!atst) {
         return NULL;
     }
@@ -40,6 +40,30 @@ char* song_string(void* sng) {
     return _sng->str_rep;
 }
 
+void elements_update_vectors(elements* e) {
+    scrolling_menu** menus = e->menus;
+
+    // if selected abm_artist changed, need to change albums vec
+    if (e->col_idx == 0) {
+        abm_artist* abm_a = menu_get_hovered(menus[0]);
+        JVEC* vec2 = (abm_a)
+            ? abm_a->albums
+            : NULL;
+        menu_change_vec(menus[1], vec2);
+    }
+
+    // if either abm_artist or album changed, need to change songs vec
+    if (e->col_idx < 2) {
+        album* abm = menu_get_hovered(menus[1]);
+        JVEC* vec3 = (abm)
+            ? abm->songs
+            : NULL;
+        menu_change_vec(menus[2], vec3);
+    }
+}
+
+
+
 elements* elements_new(lib_mem* lib) {
     elements* e = calloc(1, sizeof(*e));
     if (!e) {
@@ -54,9 +78,12 @@ elements* elements_new(lib_mem* lib) {
         return NULL;
     }
     e->menus = menus;
-    e->menus[0] = menu_new(lib->abm_artists, artist_string);
-    e->menus[1] = menu_new(((abm_artist*)JVEC_get(e->menus[0]->vec, 0))->albums, album_string);
-    e->menus[2] = menu_new(((album*)JVEC_get(e->menus[1]->vec, 0))->songs, song_string);
+    e->menus[0] = menu_new(lib->abm_artists, abm_artist_string);
+    e->menus[1] = menu_new(NULL, album_string);
+    e->menus[2] = menu_new(NULL, song_string);
+    elements_update_vectors(e);
+
+
     menu_focus(e->menus[0]);
 
     e->playback_menu = playback_new();

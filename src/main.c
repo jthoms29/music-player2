@@ -38,7 +38,6 @@ void main_loop(lib_mem* lib) {
     fds[1].events = POLLIN;
 
     int draw_ret;
-    int scrolled = 0;
     e->playback_menu->time_s = 0;
 
 
@@ -91,13 +90,13 @@ void main_loop(lib_mem* lib) {
                 case 'j':
                 case 'J':
                     menu_scroll(e->menus[e->col_idx], 1);
-                    scrolled = 1;
+                    elements_update_vectors(e);
                     break;
                 //scroll current win up
                 case 'k':
                 case 'K':
                     menu_scroll(e->menus[e->col_idx], -1);
-                    scrolled = 1;
+                    elements_update_vectors(e);
                     break;
                 //move to prev column
                 case 'h':
@@ -122,27 +121,13 @@ void main_loop(lib_mem* lib) {
                         menu_set_selected(e->menus[0], e->menus[0]->idx);
                         menu_set_selected(e->menus[1], e->menus[1]->idx);
                         menu_set_selected(e->menus[2], e->menus[2]->idx);
-
                         album* abm = menu_get_hovered(e->menus[1]);
                         size_t idx = e->menus[2]->idx;
                         playback_change_song(e->playback_menu, abm->songs, idx);
                         audio_load_song(player, e->playback_menu->cur_song);
                     }
-
                     break;
-            }
-            if (scrolled) {
-
-                if (e->col_idx == 0) {
-                    JVEC* albums_vec = ((abm_artist*) menu_get_hovered(e->menus[0]))->albums;
-                    menu_change_vec(e->menus[1], albums_vec);
-                }
-                if (e->col_idx < 2) {
-                    JVEC* songs_vec = ((album*)menu_get_hovered(e->menus[1]))->songs;
-                    menu_change_vec(e->menus[2], songs_vec);
-                }
-                scrolled = 0;
-
+                    
             }
         }
     }
@@ -154,7 +139,7 @@ int main(int argc, char** argv) {
     //scan_dir(&lib_db, argv[1]);
 
     lib_mem* mem = lib_mem_new();
-    //scan_dir(lib_db, argv[1]);
+    scan_dir(lib_db, argv[1]);
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
         printf("failed\n");
