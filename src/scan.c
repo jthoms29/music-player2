@@ -10,6 +10,14 @@
 #include <sqlite3.h>
 
 
+lib_db* library_scan() {
+    lib_db* lib_db = lib_db_new();
+    lib_db_reset_seen(lib_db);
+    scan_dir(lib_db, MUSIC_DIR);
+    lib_db_remove_unseen(lib_db);
+    return lib_db;
+}
+
 int read_tags(lib_db* lib_db, char* path) {
     TagLib_File *file;
     TagLib_Tag *tag;

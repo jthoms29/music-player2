@@ -42,7 +42,7 @@ void main_loop(lib_mem* lib) {
 
 
 
-
+    lib_db* l_db;
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
@@ -127,7 +127,14 @@ void main_loop(lib_mem* lib) {
                         audio_load_song(player, e->playback_menu->cur_song);
                     }
                     break;
-                    
+
+                case 'r':
+                    lib_mem_free(&lib);
+                    l_db = library_scan();
+                    lib = lib_mem_new();
+                    load_library(lib, l_db);
+                    e = elements_new(lib);
+                    break;
             }
         }
     }
@@ -135,11 +142,9 @@ void main_loop(lib_mem* lib) {
 }
 
 int main(int argc, char** argv) {
-    lib_db* lib_db = lib_db_new();
-    //scan_dir(&lib_db, argv[1]);
 
+    lib_db* lib_db =  library_scan();
     lib_mem* mem = lib_mem_new();
-    scan_dir(lib_db, argv[1]);
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
         printf("failed\n");

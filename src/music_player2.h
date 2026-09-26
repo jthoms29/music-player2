@@ -12,6 +12,9 @@
 #include <playback_menu.h>
 #include <music_defs.h>
 
+#define MUSIC_DIR "./test_lib"
+
+
 /* 
  * Contains a pointer to the sqlite database which contains the user's music library info,
  * as well as premade statements for interacting with the db.
@@ -183,6 +186,9 @@ int retrieve_album(lib_db* lib_db, int abm_artist_id, char* album_name, char* da
  */
 int insert_song(lib_db* lib_db, int album_id, char* artist_name, char* song_title, int discnum, int tracknum, int dur_s, int bitrate, int sample_rate, int channels, char* comment, char* path);
 
+// TODO
+void lib_db_reset_seen(lib_db* l_db);
+void lib_db_remove_unseen(lib_db* l_db);
 
 /**
  * @brief Frees lib_db struct
@@ -226,6 +232,7 @@ void debug_print_mem(lib_mem* mem);
 int load_library(lib_mem* mem, lib_db* db);
 void lib_mem_free(lib_mem** lib_ptr);
 
+lib_db* library_scan();
 /* model func*/
 
 elements* elements_new(lib_mem* lib);

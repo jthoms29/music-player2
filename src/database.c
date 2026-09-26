@@ -19,7 +19,9 @@ lib_db* lib_db_new() {
     const char* sql_str =
         "CREATE TABLE IF NOT EXISTS abm_artists ("
         "abm_artist_id INTEGER PRIMARY KEY,"
-        "name TEXT NOT NULL UNIQUE"
+        "name TEXT NOT NULL UNIQUE,"
+        "seen BOOL,"
+        "UNIQUE(name)"
         ");"
 
         "CREATE TABLE IF NOT EXISTS albums ("
@@ -28,6 +30,7 @@ lib_db* lib_db_new() {
         "title TEXT NOT NULL,"
         "date TEXT NOT NULL,"
         "orig_date TEXT NOT NULL,"
+        "seen BOOL,"
         "FOREIGN KEY (abm_artist_id) REFERENCES abm_artists(abm_artist_id),"
         "UNIQUE(abm_artist_id, title, date)"
         ");"
@@ -45,8 +48,9 @@ lib_db* lib_db_new() {
         "channels INTEGER,"
         "comment TEXT,"
         "path TEXT NOT NULL UNIQUE,"
-        "found BOOL,"
-        "FOREIGN KEY (album_id) REFERENCES albums(album_id)"
+        "seen BOOL,"
+        "FOREIGN KEY (album_id) REFERENCES albums(album_id),"
+        "UNIQUE(path)"
         ");";
     rc = sqlite3_exec(l_db->db, sql_str, 0, 0, &err_msg);
     if (rc != SQLITE_OK ) {
@@ -59,7 +63,8 @@ lib_db* lib_db_new() {
     //INSERT ALBUM ARTIST
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO abm_artists(name) VALUES(?);", 
+        "INSERT INTO abm_artists(name, seen) VALUES(?, true) "
+            "ON conflict(name) DO UPDATE SET seen = true;", 
         -1, 
         &l_db->insert_abm_artist, 
         NULL
@@ -85,7 +90,8 @@ lib_db* lib_db_new() {
     //INSERT ALBUM
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO albums(abm_artist_id, title, date, orig_date) VALUES(?, ?, ?, ?);", 
+        "INSERT INTO albums(abm_artist_id, title, date, orig_date, seen) VALUES(?, ?, ?, ?, true) "
+            "ON conflict(abm_artist_id, title, date) DO UPDATE SET seen = true;", 
         -1, 
         &l_db->insert_album, 
         NULL
@@ -111,7 +117,8 @@ lib_db* lib_db_new() {
     // INSERT SONG
     rc = sqlite3_prepare_v2(
         l_db->db, 
-        "INSERT OR IGNORE INTO songs(album_id, artist_name, title, disc_num, track_num, dur_s, bitrate, sample_rate, channels, comment, path) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);", 
+        "INSERT INTO songs(album_id, artist_name, title, disc_num, track_num, dur_s, bitrate, sample_rate, channels, comment, path, seen) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, true) "
+            "ON conflict(path) DO UPDATE SET seen = true;", 
         -1, 
         &l_db->insert_song, 
         NULL
@@ -242,6 +249,37 @@ int insert_song(lib_db* lib_db, int album_id, char* artist_name, char* song_titl
     return (rc == SQLITE_DONE) ? 0 : -1;
 }
 
+void lib_db_reset_seen(lib_db* l_db) {
+    char* err_msg = NULL;
+    //set seen vals for all tables to false
+    const char* sql_str = 
+        "BEGIN;"
+        "UPDATE abm_artists SET seen = false;"
+        "UPDATE albums SET seen = false;"
+        "UPDATE songs SET seen = false;"
+        "COMMIT;";
+
+    int rc = sqlite3_exec(l_db->db, sql_str, 0, 0, &err_msg);
+    if (rc != SQLITE_OK ) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+    } 
+}
+
+void lib_db_remove_unseen(lib_db* l_db) {
+    char* err_msg = NULL;
+    //set seen vals for all tables to false
+    const char* sql_str = 
+        "DELETE FROM songs WHERE seen = false;"
+        "DELETE FROM albums WHERE seen = false;"
+        "DELETE FROM abm_artists WHERE seen = false;";
+
+    int rc = sqlite3_exec(l_db->db, sql_str, 0, 0, &err_msg);
+    if (rc != SQLITE_OK ) {
+        fprintf(stderr, "SQL error: %s\n", err_msg);
+        sqlite3_free(err_msg);
+    } 
+}
 
 void lib_db_free(lib_db** lib_db_ptr) {
     lib_db* l_db = *lib_db_ptr;
@@ -260,3 +298,4 @@ void lib_db_free(lib_db** lib_db_ptr) {
     free(l_db);
     *lib_db_ptr = NULL;
 }
+
