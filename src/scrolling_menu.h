@@ -132,6 +132,7 @@ int menu_change_vec(scrolling_menu* m, JVEC* vec);
 void menu_set_selected(scrolling_menu* m, size_t idx);
 void menu_deselect(scrolling_menu* m);
 
+bool menu_is_on_selected(scrolling_menu* m);
 
 
 #endif

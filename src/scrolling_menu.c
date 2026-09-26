@@ -151,11 +151,14 @@ int menu_change_vec(scrolling_menu* m, JVEC* vec) {
 }
 
 void menu_set_selected(scrolling_menu* m, size_t idx) {
-
     m->show_selected = true;
     m->selected_idx = idx;
 }
 
 void menu_deselect(scrolling_menu* m) {
     m->show_selected = false;
+}
+
+bool menu_is_on_selected(scrolling_menu* m) {
+    return m->selected_idx == m->idx;
 }
