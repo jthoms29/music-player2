@@ -4,6 +4,7 @@
 #include <music_defs.h>
 
 
+#define DRAW_PIXEL(w, x, y) mvwaddch(w, y, x, ' ' | COLOR_PAIR(3))
 
 scrolling_menu* menu_new(JVEC* vec, char* (*str_func)(void*)) {
     scrolling_menu* m = calloc(1, sizeof(*m));
@@ -67,7 +68,7 @@ void menu_scroll(scrolling_menu* m, int dir) {
 
 }
 
-int menu_draw(scrolling_menu* m) {
+int menu_draw(scrolling_menu* m, bool selected_override) {
     WINDOW* w = m->win;
     werase(w);
 
@@ -111,6 +112,10 @@ int menu_draw(scrolling_menu* m) {
         else {
             mvwaddnstr(w, i+1, 1, str, wdt-2);
         }
+
+        if (top+i == m->selected_idx && selected_override) {
+            DRAW_PIXEL(w, 0, i+1);
+        }
     }
     // refresh window
     wnoutrefresh(w);
@@ -132,7 +137,7 @@ void menu_unfocus(scrolling_menu* m) {
     m->focused = false;
 }
 
-void* menu_get_selected(scrolling_menu* m) {
+void* menu_get_hovered(scrolling_menu* m) {
     assert(m->idx <= JVEC_len(m->vec));
     return JVEC_get(m->vec, m->idx);
 }
@@ -143,4 +148,14 @@ int menu_change_vec(scrolling_menu* m, JVEC* vec) {
     m->idx = 0;
     m->top = 0;
     return 0;
+}
+
+void menu_set_selected(scrolling_menu* m, size_t idx) {
+
+    m->show_selected = true;
+    m->selected_idx = idx;
+}
+
+void menu_deselect(scrolling_menu* m) {
+    m->show_selected = false;
 }

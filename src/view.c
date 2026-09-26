@@ -70,9 +70,10 @@ int draw_screen(elements* e) {
     }
 
     wnoutrefresh(stdscr);
-    menu_draw(e->menus[0]);
-    menu_draw(e->menus[1]);
-    menu_draw(e->menus[2]);
+
+    menu_draw(e->menus[0], true);
+    menu_draw(e->menus[1], e->menus[0]->idx == e->menus[0]->selected_idx);
+    menu_draw(e->menus[2], e->menus[0]->idx == e->menus[0]->selected_idx && e->menus[1]->idx == e->menus[1]->selected_idx);
     playback_draw(e->playback_menu);
     doupdate();
     return 0;

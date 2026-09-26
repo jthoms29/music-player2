@@ -16,6 +16,9 @@ typedef struct scrolling_menu {
 
     int height;
     int width;
+
+    bool show_selected;
+    size_t selected_idx;
 } scrolling_menu;
 
 
@@ -65,7 +68,9 @@ void menu_scroll(scrolling_menu* m, int dir);
  * @post Current menu state is drawn and refreshed, ready to be shown with `doupdate()`
  * @return 0 on success, anything else on failure
  */
-int menu_draw(scrolling_menu* m);
+
+ // TODO ------------------------------------
+int menu_draw(scrolling_menu* m, bool selected_override);
 
 
 /**
@@ -104,14 +109,14 @@ void menu_unfocus(scrolling_menu* m);
 
 
 /**
- * @brief Return element from vector which is currently selected in menu
+ * @brief Return element from vector which is currently being hovered over
  * @param[in] m scrolling_menu struct
  * @pre m must have been created with `menu_new()`, internal vector must be non-NULL, 
  * m's current index must be within internal vector's bounds
- * @post current selected element in menu is returned
- * @return selected element on success, NULL on failure
+ * @post current hovered element in menu is returned
+ * @return hovered element on success, NULL on failure
  */
-void* menu_get_selected(scrolling_menu* m);
+void* menu_get_hovered(scrolling_menu* m);
 
 
 /**
@@ -123,6 +128,10 @@ void* menu_get_selected(scrolling_menu* m);
  * @return 0 on success, anything else on failure
  */
 int menu_change_vec(scrolling_menu* m, JVEC* vec);
+
+void menu_set_selected(scrolling_menu* m, size_t idx);
+void menu_deselect(scrolling_menu* m);
+
 
 
 #endif

@@ -40,7 +40,8 @@ void audio_free(audio_player** ap_ptr);
  * @param[in, out] ap pointer to audio_player struct created by `audio_new()`
  * @param[in] sng song struct retrieved from in-memory music library
  * @pre ap must be non-NULL, created with `audio_new()`, sng must be non-NULL
- * @post Current song halted if playing, song specified by sng is loaded and started
+ * @post Current song halted if playing, song specified by sng is loaded and started. Playback function which plays next
+ * song in playlist called at completion
  * @return 0 on success, anything else on failure
  */
 int audio_load_song(audio_player* ap, song* sng);

@@ -69,6 +69,8 @@ void main_loop(lib_mem* lib) {
             uint8_t signal;
             read(player->notify_read_fd, &signal, 1);
             if (playback_next_song(e->playback_menu)) {
+                // TODO
+                menu_set_selected(e->menus[2], ++e->menus[2]->selected_idx);
                 audio_load_song(player, e->playback_menu->cur_song);
             }
             continue;
@@ -116,7 +118,12 @@ void main_loop(lib_mem* lib) {
 
                 case 'p':
                     if (e->col_idx == 2) {
-                        album* abm = menu_get_selected(e->menus[1]);
+                        // update selected vals for each menu
+                        menu_set_selected(e->menus[0], e->menus[0]->idx);
+                        menu_set_selected(e->menus[1], e->menus[1]->idx);
+                        menu_set_selected(e->menus[2], e->menus[2]->idx);
+
+                        album* abm = menu_get_hovered(e->menus[1]);
                         size_t idx = e->menus[2]->idx;
                         playback_change_song(e->playback_menu, abm->songs, idx);
                         audio_load_song(player, e->playback_menu->cur_song);
@@ -127,11 +134,11 @@ void main_loop(lib_mem* lib) {
             if (scrolled) {
 
                 if (e->col_idx == 0) {
-                    JVEC* albums_vec = ((abm_artist*) menu_get_selected(e->menus[0]))->albums;
+                    JVEC* albums_vec = ((abm_artist*) menu_get_hovered(e->menus[0]))->albums;
                     menu_change_vec(e->menus[1], albums_vec);
                 }
                 if (e->col_idx < 2) {
-                    JVEC* songs_vec = ((album*)menu_get_selected(e->menus[1]))->songs;
+                    JVEC* songs_vec = ((album*)menu_get_hovered(e->menus[1]))->songs;
                     menu_change_vec(e->menus[2], songs_vec);
                 }
                 scrolled = 0;

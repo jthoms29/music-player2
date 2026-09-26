@@ -19,14 +19,12 @@ typedef struct playback_menu {
 } playback_menu;
 
 /**
- * @brief
- * @details
- * @note
- * @param[in]
- * @param[in]
- * @pre
- * @post
- * @return
+ * @brief Creates a new playback_window
+ * @details Allocates memory for new playback_menu struct, sets up ncurses window within
+ * @note Must be freed with playback_free()
+ * @pre Ncurses must be initialized
+ * @post playback_menu struct allocated, ncurses window within set up
+ * @return reference to new playback_menu struct
  */
 playback_menu* playback_new();
 
