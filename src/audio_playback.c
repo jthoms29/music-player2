@@ -35,6 +35,7 @@ audio_player* audio_new() {
     }
     ap->notify_read_fd = notify[0];
     ap->notify_write_fd = notify[1];
+    ap->sound_initialized = false;
     return ap;
 }
 
@@ -56,12 +57,20 @@ void audio_free(audio_player** ap_ptr) {
 }
 
 
+int audio_end_playback(audio_player* ap) {
+    // if song is currently playing, stop it
+    if (ap->sound_initialized) {
+        ma_sound_uninit(&ap->sound);
+        ap->sound_initialized = false;
+    }
+    return 0;
+}
 
 int audio_load_song(audio_player* ap, song* sng) {
     ma_result res;
 
     // if song is currently playing, stop it
-    if (ma_sound_is_playing(&ap->sound) || ma_sound_at_end(&ap->sound)) {
+    if (ap->sound_initialized) {
         ma_sound_uninit(&ap->sound);
     }
 
@@ -71,6 +80,7 @@ int audio_load_song(audio_player* ap, song* sng) {
         ma_sound_uninit(&ap->sound);
         return -1;
     }
+    ap->sound_initialized = true;
     // set function sound will call when ends
     ma_sound_set_end_callback(&ap->sound, end_callback, ap);
 

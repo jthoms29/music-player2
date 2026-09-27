@@ -12,6 +12,8 @@ typedef struct audio_player {
     // for telling main thread to switch to next song
     int notify_read_fd;
     int notify_write_fd;
+
+    bool sound_initialized;
 } audio_player;
 
 /**
@@ -74,4 +76,5 @@ bool audio_is_playing(audio_player* ap);
  */
 int audio_pause(audio_player* ap);
 
+int audio_end_playback(audio_player* ap);
 #endif

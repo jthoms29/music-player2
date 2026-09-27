@@ -14,6 +14,7 @@ void free_abm_artist(abm_artist* abm_atst) {
     if (abm_atst->albums) {
         JVEC_free(&(abm_atst->albums));
     }
+    free(abm_atst);
 }
 
 void free_album(album* abm) {
@@ -35,6 +36,7 @@ void free_album(album* abm) {
     if (abm->str_rep) {
         free(abm->str_rep);
     }
+    free(abm);
 }
 
 void free_song(song* sng) {
@@ -53,6 +55,7 @@ void free_song(song* sng) {
     if (sng->str_rep) {
         free(sng->str_rep);
     }
+    free(sng);
 }
 
 void lib_mem_free(lib_mem** lib_ptr) {

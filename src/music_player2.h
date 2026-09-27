@@ -244,6 +244,7 @@ void view_init();
 
 void elements_update_vectors(elements* e);
 
+void* elements_reload_lib(elements* e, lib_mem* lib);
 void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt);
 
 void main_loop(lib_mem* lib);
@@ -254,5 +255,7 @@ void resize_elements(elements* e);
 
 int draw_screen(elements* e);
 void ncurses_init();
+
+
 #endif
 

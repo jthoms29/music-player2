@@ -129,11 +129,12 @@ void main_loop(lib_mem* lib) {
                     break;
 
                 case 'r':
+                    audio_end_playback(player);
                     lib_mem_free(&lib);
                     l_db = library_scan();
                     lib = lib_mem_new();
                     load_library(lib, l_db);
-                    e = elements_new(lib);
+                    elements_reload_lib(e, lib);
                     break;
             }
         }
@@ -143,7 +144,7 @@ void main_loop(lib_mem* lib) {
 
 int main(int argc, char** argv) {
 
-    lib_db* lib_db =  library_scan();
+    lib_db* lib_db =  lib_db_new();
     lib_mem* mem = lib_mem_new();
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);

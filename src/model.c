@@ -83,11 +83,32 @@ elements* elements_new(lib_mem* lib) {
     e->menus[2] = menu_new(NULL, song_string);
     elements_update_vectors(e);
 
-
     menu_focus(e->menus[0]);
 
     e->playback_menu = playback_new();
     return e;
+}
+
+void* elements_reload_lib(elements* e, lib_mem* lib) {
+    e->menus[0]->idx = 0;
+    e->menus[0]->selected_idx = 0;
+
+    e->menus[1]->idx = 0;
+    e->menus[1]->selected_idx = 0;
+    e->menus[2]->idx = 0;
+    e->menus[2]->selected_idx = 0;
+
+
+    menu_focus(e->menus[0]);
+    menu_unfocus(e->menus[1]);
+    menu_unfocus(e->menus[2]);
+
+    e->col_idx = 0;
+    menu_change_vec(e->menus[0], lib->abm_artists);
+    menu_change_vec(e->menus[1], NULL);
+    menu_change_vec(e->menus[1], NULL);
+    elements_update_vectors(e);
+    menu_focus(e->menus[0]);
 }
 
 
