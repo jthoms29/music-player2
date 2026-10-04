@@ -75,6 +75,7 @@ void lib_mem_reset(lib_mem* lib) {
     if (lib->album_cache) {
         JHASHMAP_free(&lib->album_cache);
     }
+
     // abm_artists vec
     lib->abm_artists = JVEC_new(NULL, abm_artist_compare);
     if (!lib->abm_artists) {
@@ -110,7 +111,9 @@ void lib_mem_reset(lib_mem* lib) {
     }
 
 
+    return;
     uh_oh:
+    printf("failed to reset lib\n");
     lib_mem_free(&lib);
 }
 

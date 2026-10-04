@@ -12,7 +12,7 @@
 #include <playback_menu.h>
 #include <music_defs.h>
 
-#define MUSIC_DIR "../../Music"
+#define MUSIC_DIR "./test_lib"
 
 
 /* 
