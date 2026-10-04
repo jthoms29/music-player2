@@ -58,6 +58,63 @@ void free_song(song* sng) {
     free(sng);
 }
 
+void lib_mem_reset(lib_mem* lib) {
+    if (lib->abm_artists) {
+        JVEC_free(&lib->abm_artists);
+    }
+    if (lib->albums) {
+        JVEC_free(&lib->albums); 
+    }
+    if (lib->songs) {
+        JVEC_free(&lib->songs); 
+    }
+
+    if (lib->abm_artist_cache) {
+        JHASHMAP_free(&lib->abm_artist_cache);
+    }
+    if (lib->album_cache) {
+        JHASHMAP_free(&lib->album_cache);
+    }
+    // abm_artists vec
+    lib->abm_artists = JVEC_new(NULL, abm_artist_compare);
+    if (!lib->abm_artists) {
+        fprintf(stderr, "Failed to create abm_artists vector\n");
+        goto uh_oh;
+    }
+
+    // albums vec
+    lib->albums = JVEC_new(NULL, album_compare);
+    if (!lib->albums) {
+        fprintf(stderr, "Failed to create albums vector\n");
+        goto uh_oh;
+    }
+
+    // songs vec
+    lib->songs = JVEC_new(NULL, song_compare);
+    if (!lib->songs) {
+        fprintf(stderr, "Failed to create songs vector\n");
+        goto uh_oh;
+    }
+
+
+    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare);
+    if (!lib->abm_artist_cache) {
+        fprintf(stderr, "Failed to create abm_artist cache\n");
+        goto uh_oh;
+    }
+
+    lib->album_cache = JHASHMAP_new(int_hash, int_compare);
+    if (!lib->album_cache) {
+        fprintf(stderr, "Failed to create album cache\n");
+        goto uh_oh;
+    }
+
+
+    uh_oh:
+    lib_mem_free(&lib);
+}
+
+
 void lib_mem_free(lib_mem** lib_ptr) {
     if (*lib_ptr == NULL) {
         return;

@@ -12,7 +12,7 @@
 #include <playback_menu.h>
 #include <music_defs.h>
 
-#define MUSIC_DIR "./test_lib"
+#define MUSIC_DIR "../../Music"
 
 
 /* 
@@ -257,5 +257,6 @@ int draw_screen(elements* e);
 void ncurses_init();
 
 
+void lib_mem_reset(lib_mem* lib);
 #endif
 

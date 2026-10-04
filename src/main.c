@@ -113,6 +113,7 @@ void main_loop(lib_mem* lib) {
                 case 'q':
                 case 'Q':
                     exit_flag = 1;
+                    audio_end_playback(player);
                     break;
 
                 case 'p':
@@ -130,10 +131,10 @@ void main_loop(lib_mem* lib) {
 
                 case 'r':
                     audio_end_playback(player);
-                    lib_mem_free(&lib);
                     l_db = library_scan();
-                    lib = lib_mem_new();
+                    lib_mem_reset(lib);
                     load_library(lib, l_db);
+                    lib_db_free(&l_db);
                     elements_reload_lib(e, lib);
                     break;
             }
