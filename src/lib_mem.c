@@ -7,7 +7,9 @@ int abm_artist_compare(const void* a1, const void* a2);
 int album_compare(const void* a1, const void* a2);
 int song_compare(const void* s1, const void* s2);
 
-void free_abm_artist(abm_artist* abm_atst) {
+void free_abm_artist(void* _abm_atst) {
+    abm_artist* abm_atst = (abm_artist*) _abm_atst;
+
     if (abm_atst->name) {
         free(abm_atst->name);
     }
@@ -17,7 +19,9 @@ void free_abm_artist(abm_artist* abm_atst) {
     free(abm_atst);
 }
 
-void free_album(album* abm) {
+void free_album(void* _abm) {
+    album* abm = (album*) _abm;
+
     if (abm->title) {
         free(abm->title);
     }
@@ -31,7 +35,7 @@ void free_album(album* abm) {
         free(abm->orig_date);
     }
     if (abm->songs) {
-        JVEC_free(&(abm->songs));
+        JVEC_free(&abm->songs);
     }
     if (abm->str_rep) {
         free(abm->str_rep);
@@ -39,18 +43,15 @@ void free_album(album* abm) {
     free(abm);
 }
 
-void free_song(song* sng) {
+void free_song(void* _sng) {
+
+    song* sng = (song*) _sng;
+
     if (sng->path) {
         free(sng->path);
     }
     if (sng->title) {
         free(sng->title);
-    }
-    if (sng->date) {
-        free(sng->date);
-    }
-    if (sng->orig_date) {
-        free(sng->orig_date);
     }
     if (sng->str_rep) {
         free(sng->str_rep);
@@ -77,21 +78,21 @@ void lib_mem_reset(lib_mem* lib) {
     }
 
     // abm_artists vec
-    lib->abm_artists = JVEC_new(NULL, abm_artist_compare);
+    lib->abm_artists = JVEC_new(free_abm_artist, abm_artist_compare);
     if (!lib->abm_artists) {
         fprintf(stderr, "Failed to create abm_artists vector\n");
         goto uh_oh;
     }
 
     // albums vec
-    lib->albums = JVEC_new(NULL, album_compare);
+    lib->albums = JVEC_new(free_album, album_compare);
     if (!lib->albums) {
         fprintf(stderr, "Failed to create albums vector\n");
         goto uh_oh;
     }
 
     // songs vec
-    lib->songs = JVEC_new(NULL, song_compare);
+    lib->songs = JVEC_new(free_song, song_compare);
     if (!lib->songs) {
         fprintf(stderr, "Failed to create songs vector\n");
         goto uh_oh;
@@ -145,21 +146,21 @@ lib_mem* lib_mem_new(void) {
     }
 
     // abm_artists vec
-    lib->abm_artists = JVEC_new(NULL, abm_artist_compare);
+    lib->abm_artists = JVEC_new(free_abm_artist, abm_artist_compare);
     if (!lib->abm_artists) {
         fprintf(stderr, "Failed to create abm_artists vector\n");
         goto uh_oh;
     }
 
     // albums vec
-    lib->albums = JVEC_new(NULL, album_compare);
+    lib->albums = JVEC_new(free_album, album_compare);
     if (!lib->albums) {
         fprintf(stderr, "Failed to create albums vector\n");
         goto uh_oh;
     }
 
     // songs vec
-    lib->songs = JVEC_new(NULL, song_compare);
+    lib->songs = JVEC_new(free_song, song_compare);
     if (!lib->songs) {
         fprintf(stderr, "Failed to create songs vector\n");
         goto uh_oh;

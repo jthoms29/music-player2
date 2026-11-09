@@ -70,6 +70,14 @@ void menu_scroll(scrolling_menu* m, int dir);
  */
 
  // TODO ------------------------------------
+/**
+ * @brief 
+ * @details
+ * @param[in, out]
+ * @pre 
+ * @post
+ * @return
+ */
 int menu_draw(scrolling_menu* m, bool selected_override);
 
 
@@ -129,9 +137,33 @@ void* menu_get_hovered(scrolling_menu* m);
  */
 int menu_change_vec(scrolling_menu* m, JVEC* vec);
 
+/**
+ * @brief 
+ * @details
+ * @param[in, out]
+ * @pre 
+ * @post
+ * @return
+ */
 void menu_set_selected(scrolling_menu* m, size_t idx);
+/**
+ * @brief 
+ * @details
+ * @param[in, out]
+ * @pre 
+ * @post
+ * @return
+ */
 void menu_deselect(scrolling_menu* m);
 
+/**
+ * @brief 
+ * @details
+ * @param[in, out]
+ * @pre 
+ * @post
+ * @return
+ */
 bool menu_is_on_selected(scrolling_menu* m);
 
 

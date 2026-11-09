@@ -22,12 +22,12 @@ int read_tags(lib_db* lib_db, char* path) {
     TagLib_File *file;
     TagLib_Tag *tag;
     const TagLib_AudioProperties *properties;
-
     // not an audio file
-    if ( !(file = taglib_file_new(path)) || !(tag = taglib_file_tag(file)) ) {
+    if ( !(file = taglib_file_new(path)) || !taglib_file_is_valid(file)) {
+        if (file) { taglib_file_free(file); }
         return 0; 
     }
-
+    tag = taglib_file_tag(file);
     properties = taglib_file_audioproperties(file);
 
     char* title = taglib_tag_title(tag);

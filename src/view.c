@@ -14,6 +14,7 @@ void draw_playback_menu(WINDOW* w, size_t hgt, size_t wdt) {
 
 void ncurses_init() {
 
+    freopen("errors.log", "a", stderr);
     // ncurses init
     initscr();
 

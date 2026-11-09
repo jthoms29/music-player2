@@ -143,8 +143,12 @@ void main_loop(lib_mem* lib) {
     endwin();
 }
 
+static void taglib_no_debug(const char* message) {
+    (void)message;
+}
 int main(int argc, char** argv) {
 
+    //taglib_set_debug_handler(taglib_no_debug);
     lib_db* lib_db =  lib_db_new();
     lib_mem* mem = lib_mem_new();
     if (load_library(mem, lib_db)) {
