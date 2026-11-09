@@ -241,11 +241,13 @@ int load_abm_artists(lib_mem* mem, lib_db* db) {
     // put all abm_artists in alphabetical order
     JVEC_sort(vec);
 
+    sqlite3_finalize(pstmt);
     return 0;
 
     uh_oh:
     // free current abm_artist that caused error
     free_abm_artist(abm_atst);
+    sqlite3_finalize(pstmt);
     return 1;
 }
 
@@ -355,11 +357,13 @@ int load_albums(lib_mem* mem, lib_db* db) {
         JVEC_sort(abm_atst->albums);
     }
 
+    sqlite3_finalize(pstmt);
     return 0;
 
     uh_oh:
     // free album which caused failure
     free_album(abm);
+    sqlite3_finalize(pstmt);
     return 1;
 }
 
@@ -470,11 +474,13 @@ int load_songs(lib_mem* mem, lib_db* db) {
         JVEC_sort(abm->songs);
     }
 
+    sqlite3_finalize(pstmt);
     return 0;
 
     uh_oh:
     // free song which caused failure
     free_song(sng);
+    sqlite3_finalize(pstmt);
     return 1;
 }
 
@@ -496,6 +502,8 @@ int load_library(lib_mem* mem, lib_db* db) {
 
     return 0;
 }
+
+
 
 void debug_print_mem(lib_mem* mem) {
     JVEC* abm_artists = mem->abm_artists;
