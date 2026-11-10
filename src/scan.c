@@ -75,6 +75,7 @@ int read_tags(lib_db* lib_db, char* path) {
     if (vals1) { taglib_property_free(vals1); }
     if (vals2) { taglib_property_free(vals2); }
     if (vals3) { taglib_property_free(vals3); }
+    if (vals4) { taglib_property_free(vals4); }
     taglib_tag_free_strings();
     taglib_file_free(file);
 

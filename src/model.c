@@ -10,6 +10,7 @@ char* abm_artist_string(void* atst) {
     return _abm_atst->name;
 }
 
+
 char* album_string(void* abm) {
     if (!abm) {
         return NULL;
@@ -25,11 +26,11 @@ char* album_string(void* abm) {
     return _abm->str_rep;
 }
 
+
 char* song_string(void* sng) {
     if (!sng) {
         return NULL;
     }
-
     song* _sng = (song*) sng;
     if (!_sng->str_rep) {
         char buf[256];
@@ -89,6 +90,22 @@ elements* elements_new(lib_mem* lib) {
     return e;
 }
 
+
+void elements_free(elements** e_ptr) {
+    if (!(*e_ptr)) {
+        return;
+    }
+
+    elements* e = *e_ptr;
+    menu_free(&e->menus[0]);
+    menu_free(&e->menus[1]);
+    menu_free(&e->menus[2]);
+    free(e->menus);
+
+    playback_free(&e->playback_menu);
+    free(e);
+}
+
 void* elements_reload_lib(elements* e, lib_mem* lib) {
     e->menus[0]->idx = 0;
     e->menus[0]->selected_idx = 0;
@@ -106,9 +123,11 @@ void* elements_reload_lib(elements* e, lib_mem* lib) {
     e->col_idx = 0;
     menu_change_vec(e->menus[0], lib->abm_artists);
     menu_change_vec(e->menus[1], NULL);
-    menu_change_vec(e->menus[1], NULL);
+    menu_change_vec(e->menus[2], NULL);
     elements_update_vectors(e);
     menu_focus(e->menus[0]);
+
+    e->playback_menu->cur_song = NULL;
 }
 
 

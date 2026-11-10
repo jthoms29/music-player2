@@ -42,9 +42,10 @@ audio_player* audio_new() {
 void audio_free(audio_player** ap_ptr) {
     if (!(*ap_ptr)) { return; }
 
-    // pretty sure it's safe to pass NULL to these, don't need check
+    if ((*ap_ptr)->sound_initialized) {
+        ma_sound_uninit(&(*ap_ptr)->sound);
+    }
     ma_engine_uninit(&(*ap_ptr)->engine); // :)
-    ma_sound_uninit(&(*ap_ptr)->sound);
     
 
     // close the pipe

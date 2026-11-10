@@ -130,10 +130,12 @@ lib_db* lib_db_new() {
 
 
     //set up primary key caches
-    JHASHMAP* artist_cache = JHASHMAP_new(string_hash, string_compare);
+    JHASHMAP* artist_cache = JHASHMAP_new(string_hash, string_compare, free);
     l_db->abm_artist_cache = artist_cache;
-    JHASHMAP* album_cache = JHASHMAP_new(string_hash, string_compare);
+    JHASHMAP* album_cache = JHASHMAP_new(string_hash, string_compare, free);
     l_db->album_cache = album_cache;
+    
+    sqlite3_free(err_msg);
     return l_db;
 
     uh_oh:
@@ -142,8 +144,9 @@ lib_db* lib_db_new() {
         sqlite3_finalize(l_db->insert_album);
         sqlite3_finalize(l_db->select_album);
         sqlite3_finalize(l_db->insert_song);
-        sqlite3_free(err_msg);        
+        sqlite3_free(err_msg);
         sqlite3_close(l_db->db);
+        free(l_db);
         return NULL;
 }
 

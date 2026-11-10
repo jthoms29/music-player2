@@ -56,6 +56,12 @@ void free_song(void* _sng) {
     if (sng->str_rep) {
         free(sng->str_rep);
     }
+    if (sng->artist_name) {
+        free(sng->artist_name);
+    }
+    if (sng->comment) {
+        free(sng->comment);
+    }
     free(sng);
 }
 
@@ -99,13 +105,13 @@ void lib_mem_reset(lib_mem* lib) {
     }
 
 
-    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare);
+    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare, NULL);
     if (!lib->abm_artist_cache) {
         fprintf(stderr, "Failed to create abm_artist cache\n");
         goto uh_oh;
     }
 
-    lib->album_cache = JHASHMAP_new(int_hash, int_compare);
+    lib->album_cache = JHASHMAP_new(int_hash, int_compare, NULL);
     if (!lib->album_cache) {
         fprintf(stderr, "Failed to create album cache\n");
         goto uh_oh;
@@ -132,6 +138,12 @@ void lib_mem_free(lib_mem** lib_ptr) {
     }
     if ((*lib_ptr)->songs) {
         JVEC_free(&(*lib_ptr)->songs); 
+    }
+    if ((*lib_ptr)->abm_artist_cache) {
+        JHASHMAP_free(&(*lib_ptr)->abm_artist_cache);
+    }
+    if ((*lib_ptr)->album_cache) {
+        JHASHMAP_free(&(*lib_ptr)->album_cache);
     }
     free(*lib_ptr);
     *lib_ptr = NULL;
@@ -167,13 +179,13 @@ lib_mem* lib_mem_new(void) {
     }
 
 
-    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare);
+    lib->abm_artist_cache = JHASHMAP_new(int_hash, int_compare, NULL);
     if (!lib->abm_artist_cache) {
         fprintf(stderr, "Failed to create abm_artist cache\n");
         goto uh_oh;
     }
 
-    lib->album_cache = JHASHMAP_new(int_hash, int_compare);
+    lib->album_cache = JHASHMAP_new(int_hash, int_compare, NULL);
     if (!lib->album_cache) {
         fprintf(stderr, "Failed to create album cache\n");
         goto uh_oh;

@@ -12,7 +12,7 @@
 #include <playback_menu.h>
 #include <music_defs.h>
 
-#define MUSIC_DIR "../../Music"
+#define MUSIC_DIR "./test_lib"
 
 
 /* 
@@ -236,7 +236,7 @@ lib_db* library_scan();
 /* model func*/
 
 elements* elements_new(lib_mem* lib);
-
+void elements_free(elements** e_ptr);
 /* VIEW FUNCTIONS $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ */
 
 void view_init();

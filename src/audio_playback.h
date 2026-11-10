@@ -76,5 +76,13 @@ bool audio_is_playing(audio_player* ap);
  */
 int audio_pause(audio_player* ap);
 
+/**
+ * @brief End the currently playing song
+ * @details end playback of currently selected song within ap
+ * @param[in, out] ap pointer to ap audio_player struct
+ * @pre ap must have been created with `audio_new()`
+ * @post if song is currently playing, it is ended
+ * @return 0 on success, anything else on failure
+ */
 int audio_end_playback(audio_player* ap);
 #endif

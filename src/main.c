@@ -9,6 +9,30 @@
 #include <audio_playback.h>
 #include <unistd.h>
 
+void refresh_lib(audio_player* player, lib_mem* lib, elements* e) {
+    audio_end_playback(player);
+    lib_db* l_db = library_scan();
+    lib_mem_reset(lib);
+    load_library(lib, l_db);
+    lib_db_free(&l_db);
+    elements_reload_lib(e, lib);
+}
+
+void play_selected(audio_player* player, elements* e) {
+    if (e->col_idx != 2) {
+        return;
+    }
+    // update selected vals for each menu
+    menu_set_selected(e->menus[0], e->menus[0]->idx);
+    menu_set_selected(e->menus[1], e->menus[1]->idx);
+    menu_set_selected(e->menus[2], e->menus[2]->idx);
+    album* abm = menu_get_hovered(e->menus[1]);
+    size_t idx = e->menus[2]->idx;
+    playback_change_song(e->playback_menu, abm->songs, idx);
+    audio_load_song(player, e->playback_menu->cur_song);
+}
+
+
 void main_loop(lib_mem* lib) {
     int rows, cols;
     size_t menu_wdt = 0, menu_hgt = 0;
@@ -25,7 +49,6 @@ void main_loop(lib_mem* lib) {
     int resize = 1;
 
 
-
     // setup audio
     audio_player* player = audio_new();
 
@@ -33,7 +56,7 @@ void main_loop(lib_mem* lib) {
     fds[0].fd = 0;
     fds[0].events = POLLIN;
 
-    //?????
+    // for signalling that next song in playlist should be loaded
     fds[1].fd = player->notify_read_fd;
     fds[1].events = POLLIN;
 
@@ -41,12 +64,10 @@ void main_loop(lib_mem* lib) {
     e->playback_menu->time_s = 0;
 
 
-
     lib_db* l_db;
     while (!exit_flag) {
         draw_ret = draw_screen(e);
         // get input
-
         int pollret = poll(fds, 2, 250);
 
         if (pollret < 0) {
@@ -64,6 +85,8 @@ void main_loop(lib_mem* lib) {
             e->playback_menu->elapsed_s = audio_current_pos(player);
             draw_screen(e);
         }
+
+        // play next song in playlist
         if (fds[1].revents & POLLIN) {
             uint8_t signal;
             read(player->notify_read_fd, &signal, 1);
@@ -75,6 +98,7 @@ void main_loop(lib_mem* lib) {
             continue;
         }
 
+        // input from stdin received, or window resize
         if (fds[0].revents & POLLIN) {
             possible_resize:
             ch = getch();
@@ -117,35 +141,20 @@ void main_loop(lib_mem* lib) {
                     break;
 
                 case 'p':
-                    if (e->col_idx == 2) {
-                        // update selected vals for each menu
-                        menu_set_selected(e->menus[0], e->menus[0]->idx);
-                        menu_set_selected(e->menus[1], e->menus[1]->idx);
-                        menu_set_selected(e->menus[2], e->menus[2]->idx);
-                        album* abm = menu_get_hovered(e->menus[1]);
-                        size_t idx = e->menus[2]->idx;
-                        playback_change_song(e->playback_menu, abm->songs, idx);
-                        audio_load_song(player, e->playback_menu->cur_song);
-                    }
+                    play_selected(player, e);
                     break;
-
                 case 'r':
-                    audio_end_playback(player);
-                    l_db = library_scan();
-                    lib_mem_reset(lib);
-                    load_library(lib, l_db);
-                    lib_db_free(&l_db);
-                    elements_reload_lib(e, lib);
+                    refresh_lib(player, lib, e);
                     break;
             }
         }
     }
+    elements_free(&e);
+    audio_free(&player);
     endwin();
 }
 
-static void taglib_no_debug(const char* message) {
-    (void)message;
-}
+
 int main(int argc, char** argv) {
 
     //taglib_set_debug_handler(taglib_no_debug);
@@ -153,11 +162,13 @@ int main(int argc, char** argv) {
     lib_mem* mem = lib_mem_new();
     if (load_library(mem, lib_db)) {
         lib_mem_free(&mem);
+        lib_db_free(&lib_db);
         printf("failed\n");
         return 1;
     }
     lib_db_free(&lib_db);
     //debug_print_mem(mem);
     main_loop(mem);
+
     lib_mem_free(&mem);
 }
