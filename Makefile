@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -g -I/usr/local/lib
-CPPFLAGS = -O2 -Wall -pedantic -Wextra
+CFLAGS = -g -I/usr/local/lib -fsanitize=address -fno-omit-frame-pointer
+CPPFLAGS = -O2 -Wall -pedantic -Wextra -fsanitize=address
 
 OBJ_DIR=build/obj
 LIB_DIR=build/lib
